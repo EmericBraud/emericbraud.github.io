@@ -1,0 +1,19 @@
+---
+layout: base.njk
+---
+{% set prevPost = collections.posts | getPreviousCollectionItem %}
+{% set nextPost = collections.posts | getNextCollectionItem %}
+
+<p><em>Publie le {{ date | readableDate }}</em></p>
+
+{{ content | safe }}
+
+<hr>
+
+<p>
+{% if prevPost %}Precedent : <a href="{{ prevPost.url }}">&larr; {{ prevPost.data.title }}</a>{% endif %}
+{% if prevPost and nextPost %}&nbsp;|&nbsp;{% endif %}
+{% if nextPost %}Suivant : <a href="{{ nextPost.url }}">{{ nextPost.data.title }} &rarr;</a>{% endif %}
+</p>
+
+<p><a href="/posts/">Retour aux articles</a></p>
