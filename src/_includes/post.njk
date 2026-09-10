@@ -4,7 +4,7 @@ layout: base.njk
 {% set prevPost = collections.posts | getPreviousCollectionItem %}
 {% set nextPost = collections.posts | getNextCollectionItem %}
 
-<p><a href="/posts/">{{ chapter }}</a> &rarr; {{ title }}</p>
+<p><a href="/">{{ section }}</a> &rarr; {{ chapter }} &rarr; {{ title }}</p>
 <p><em>Publie le {{ date | readableDate }}</em></p>
 
 {{ content | safe }}
@@ -17,4 +17,4 @@ layout: base.njk
 {% if nextPost %}Suivant : <a href="{{ nextPost.url }}">{{ nextPost.data.title }} &rarr;</a>{% endif %}
 </p>
 
-<p><a href="/posts/">Retour aux articles</a></p>
+<p><a href="/">Retour aux articles</a></p>

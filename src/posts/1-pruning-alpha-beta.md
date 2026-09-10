@@ -2,7 +2,8 @@
 layout: post.njk
 title: Le pruning alpha-beta
 date: 2026-07-30
-chapter: Fondamentaux
+section: Fonctionnement d'un moteur d'échecs
+chapter: Les bases de la recherche
 chapterOrder: 1
 ---
 # L'EBF : la base de l'exponentielle

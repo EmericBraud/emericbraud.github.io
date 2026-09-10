@@ -2,8 +2,9 @@
 layout: post.njk
 title: Le pruning avec perte
 date: 2026-09-08
-chapter: Heuristiques d'élagage
-chapterOrder: 0
+section: Fonctionnement d'un moteur d'échecs
+chapter: Explorer moins de branches
+chapterOrder: 4
 ---
 # Un élagage qui garantit l'exactitude... mais pas la vitesse
 

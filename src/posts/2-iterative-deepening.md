@@ -2,7 +2,8 @@
 layout: post.njk
 title: L'iterative deepening
 date: 2026-09-08
-chapter: Fondamentaux
+section: Fonctionnement d'un moteur d'échecs
+chapter: Réutiliser les calculs
 chapterOrder: 2
 ---
 # Iterative Deepening

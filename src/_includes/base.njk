@@ -2,7 +2,19 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>{{ title }} - Mon Blog</title>
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{% set siteName = "Ce que développer un moteur d'échecs m'a appris" %}
+{% set siteDescription = "Les enseignements de programmation tirés du développement de Chess26, un moteur d'échecs écrit en C++23." %}
+{% set pageDescription = description or siteDescription %}
+<title>{% if title != siteName %}{{ title }} - {% endif %}{{ siteName }}</title>
+<meta name="description" content="{{ pageDescription }}">
+<meta name="author" content="Emeric Braud">
+<meta property="og:type" content="{% if layout == "post.njk" %}article{% else %}website{% endif %}">
+<meta property="og:site_name" content="{{ siteName }}">
+<meta property="og:title" content="{{ title }}">
+<meta property="og:description" content="{{ pageDescription }}">
+<meta name="twitter:card" content="summary">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
@@ -17,6 +29,7 @@
   import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
   mermaid.initialize({ startOnLoad: true, theme: "neutral" });
 </script>
+<style>:root { color-scheme: light } body { background: #fff; color: #000 }</style>
 </head>
 <body>
 
@@ -24,7 +37,6 @@
 
 <nav>
 <a href="/">Accueil</a> |
-<a href="/posts/">Articles</a> |
 <a href="/about/">A propos</a>
 </nav>
 
@@ -35,7 +47,7 @@
 <hr>
 
 <footer>
-<p>&copy; 2026 Mon Blog</p>
+<p>&copy; 2026 Emeric Braud &middot; <a href="https://github.com/EmericBraud/chess26">Chess26 sur GitHub</a></p>
 </footer>
 
 </body>

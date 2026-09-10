@@ -2,7 +2,8 @@
 layout: post.njk
 title: La table de transposition
 date: 2026-09-08
-chapter: Fondamentaux
+section: Fonctionnement d'un moteur d'échecs
+chapter: Réutiliser les calculs
 chapterOrder: 3
 ---
 # Une même position, plusieurs chemins

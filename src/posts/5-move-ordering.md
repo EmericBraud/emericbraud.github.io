@@ -2,8 +2,9 @@
 layout: post.njk
 title: Le move ordering
 date: 2026-09-08
-chapter: Heuristiques d'élagage
-chapterOrder: 1
+section: Fonctionnement d'un moteur d'échecs
+chapter: Explorer moins de branches
+chapterOrder: 5
 ---
 # Pourquoi l'ordre des coups est si important
 

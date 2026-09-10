@@ -2,7 +2,8 @@
 layout: post.njk
 title: Introduction rapide
 date: 2026-07-27
-chapter: Fondamentaux
+section: Fonctionnement d'un moteur d'échecs
+chapter: Les bases de la recherche
 chapterOrder: 0
 ---
 
