@@ -2,6 +2,8 @@
 layout: post.njk
 title: L'iterative deepening
 date: 2026-09-08
+chapter: Fondamentaux
+chapterOrder: 2
 ---
 # Iterative Deepening
 L'algorithme alpha-bêta n'est efficace que si l'on explore les meilleurs coups en premiers. Nous explorerons par la suite certaines heuristiques permettant d'explorer en priorité certains coups paraissant prometteurs.

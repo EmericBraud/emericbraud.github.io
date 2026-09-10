@@ -1,6 +1,8 @@
 module.exports = function (eleventyConfig) {
   eleventyConfig.addCollection("posts", (collectionApi) => {
-    return collectionApi.getFilteredByGlob("src/posts/*.md").sort((a, b) => a.date - b.date);
+    return collectionApi
+      .getFilteredByGlob("src/posts/*.md")
+      .sort((a, b) => a.date - b.date || (a.data.chapterOrder ?? 0) - (b.data.chapterOrder ?? 0));
   });
 
   eleventyConfig.addShortcode("fen", (fen, orientation = "white", caption = "") =>

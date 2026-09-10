@@ -7,6 +7,8 @@ permalink: /
 
 <ul>
 {% for post in collections.posts | reverse %}
-<li><a href="{{ post.url }}">{{ post.data.title }}</a></li>
+<li><a href="{{ post.url }}">{{ post.data.title }}</a> <em>({{ post.data.chapter }})</em></li>
 {% endfor %}
 </ul>
+
+<p><a href="/posts/">Voir tous les articles par chapitre &rarr;</a></p>

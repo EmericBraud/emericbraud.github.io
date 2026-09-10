@@ -2,6 +2,8 @@
 layout: post.njk
 title: Introduction rapide
 date: 2026-07-27
+chapter: Fondamentaux
+chapterOrder: 0
 ---
 
 *Cet article présente l'algorithme le plus classiquement utilisé pour permettre à l'ordinateur de jouer aux échecs. D'autres algorithmes, bien que plus marginaux, existent, s'appuyant sur des méthodes de Monte Carlo.*
@@ -12,13 +14,13 @@ date: 2026-07-27
 
 Essayons de réfléchir ensemble à la manière la plus pragmatique de résoudre ce problème : on a accès à un ordinateur, et on aimerait le faire jouer aux échecs. Bien que cela  puisse paraître complexe à première vue, c'est en réalité déconcertant de simplicité.
 
-En effet, il suffit d'à partir d'une position donnée, prédire le coup suivant, puis répéter le processus jusque la fin de la partie pour atteindre notre objectif.
+En effet, il suffit d'à partir d'une position donnée, prédire le coup suivant, puis de répéter le processus jusque la fin de la partie pour atteindre notre objectif.
 
 La question se résume alors à : **comment prédire le prochain meilleur coup ?** Intuitivement, afin de déterminer qu'un coup est meilleur qu'un autre, il est nécessaire de définir ce qu'est une bonne et une mauvaise position.
 
 # Estimer la force d'une position : la fonction d'évaluation
 
-Demandons-nous : comment un joueur d'échec arrive, d'un unique coup de regard sur l'échiquier, à déterminer qui est gagnant et qui est perdant ?
+Demandons-nous : comment un joueur d'échec arrive, d'un unique coup d'œil sur l'échiquier, à déterminer qui est gagnant et qui est perdant ?
 
 On apprend dans un premier temps aux débutants à "compter les points" :
 - Une pion : 1 point
@@ -26,7 +28,7 @@ On apprend dans un premier temps aux débutants à "compter les points" :
 - Une tour : 5 points
 - Une dame : 9 points
 
-Imaginons dans un premier temps que nous stockions dans un tableau de dimension 8x8 la position de chaque pièce sur l'échiquier. Il suffirait donc de boucler sur ce tableau, et de sommer la valeur des pièces de chaque joueur puis de faire la différence pour en déduire la force d'une position :
+Imaginons dans un premier temps que pour représenter l'échiquier, nous stockions dans un tableau de dimension 8x8 la position de chaque pièce. Pour déduire la force d'une position, il suffirait donc de boucler sur ce tableau, et de sommer la valeur des pièces de chaque joueur puis de faire la différence :
 
 $$
 S = Eval(position) = \sum_{i}^{P_{\text{blanches}}} v_i - \sum_{j}^{P_{\text{noires}}} v_j

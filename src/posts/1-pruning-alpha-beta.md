@@ -2,6 +2,8 @@
 layout: post.njk
 title: Le pruning alpha-beta
 date: 2026-07-30
+chapter: Fondamentaux
+chapterOrder: 1
 ---
 # L'EBF : la base de l'exponentielle
 Notre arbre de recherche grossit de manière exponentielle en augmentant la profondeur. On estime aux échecs qu'une position "moyenne" proposerait environ **40 à 45 coups légaux**. Cela signifie que la complexité temporelle de notre algorithme grossit en
@@ -11,7 +13,14 @@ O(45^P)
 $$
 
 où $P$ est la profondeur de recherche.
-C'est évidemment un gros problème.
+
+À titre d'exemple, à une profondeur $P = 10$ (soit seulement 5 coups pour chaque joueur), il faudrait explorer environ
+
+$$
+45^{10} \approx 34\,050\,628\,916\,015\,625 \text{ positions}
+$$
+
+soit plus de **34 millions de milliards** de positions. C'est évidemment un gros problème.
 
 <pre class="mermaid">
 graph LR
