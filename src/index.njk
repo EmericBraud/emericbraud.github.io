@@ -3,21 +3,22 @@ layout: base.njk
 title: Ce que développer un moteur d'échecs m'a appris
 permalink: /
 ---
-<p>Je développe <a href="https://github.com/EmericBraud/chess26">Chess26</a>, un moteur d'échecs écrit en C++23. Ce blog n'est pas le journal de ce projet : il rassemble ce que son développement m'a appris sur la programmation elle-même.</p>
+<p>Je développe <a href="https://github.com/EmericBraud/chess26">Chess26</a>, un moteur d'échecs écrit en C++23. Ce blog a pour but principal de référencer mes apprentissages liés à ce projet.</p>
 
-<p>Un moteur d'échecs est un bon terrain pour cela, parce qu'il ne pardonne rien :</p>
+<p>Un moteur d'échecs est un bon terrain d'apprentissage, car aucun écart n'est pardonné :</p>
 
 <ul>
 <li>la complexité algorithmique y devient tangible : chaque optimisation se lit en profondeur de recherche gagnée ;</li>
-<li>la hiérarchie mémoire cesse d'être une abstraction dès qu'une structure de données mal alignée coûte plus cher que le calcul qu'elle est censée éviter ;</li>
+<li>le coût d'un accès mémoire cesse d'être un détail le jour où une table de correspondance, censée éviter un calcul, revient plus cher que ce calcul parce qu'elle ne tient pas dans le cache ;</li>
 <li>le parallélisme montre ses limites réelles quand la synchronisation coûte plus qu'elle ne rapporte ;</li>
 <li>rien ne peut être affirmé sans mesure : une amélioration ne se prouve que statistiquement, sur des milliers de parties.</li>
 </ul>
 
 <p>Ces problèmes dépassent largement le cadre des échecs : ils se posent dans tout programme où la performance et la justesse comptent.</p>
 
-<p>Les articles partent donc des échecs, mais visent ce qu'il y a derrière. La section ci-dessous pose le décor : comment un moteur choisit un coup, et pourquoi c'est difficile. Elle sert de base aux suivantes, et se survole sans dommage si le sujet vous est familier.</p>
+<p>Les articles partent donc des échecs, mais visent à explorer les concepts de programmation sous-jacents. La première section explique le fonctionnement général d'un moteur d'échecs et permet ainsi de poser le contexte du projet. Les sections suivantes explorent des concepts plus généraux, et se lisent de manière indépendante.</p>
 
+<nav class="sommaire">
 {% for sectionName, sectionPosts in collections.posts | groupby("data.section") %}
 <h2>{{ sectionName }}</h2>
 {% for chapterName, posts in sectionPosts | groupby("data.chapter") %}
@@ -29,3 +30,4 @@ permalink: /
 </ul>
 {% endfor %}
 {% endfor %}
+</nav>

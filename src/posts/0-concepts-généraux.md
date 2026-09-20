@@ -37,11 +37,11 @@ $$
 
 Ainsi, si le score $S$ est positif, les blancs ont l'avantage. Si le score $S$ est négatif, ce sont les noirs qui semblent gagner.
 
-Evidemment, simplement sommer le score des pièces montrera vite ses limites : parfois, deux positions égales en matériel ne sont pas égales, et parfois même, une position pourtant gagnante en matériel peut être une très mauvaise position.
-
-Pendant des années, les programmeurs ont donc imaginé des règles de plus en plus sophistiquées afin d'évaluer le plus finement possible une position : bonus de paire de fous, structure de pions, sécurité du roi... On peut rajouter autant de règles que l'on souhaite.
-
-Ecrire des règles à la main pour évaluer une position, cela s'appelle une **HCE** *(Hand Crafted Evaluation)*. Des techniques plus récentes utilisent des réseaux neuronaux afin d'améliorer la finesse de l'évaluation. Mais l'idée est la même : concevoir une fonction `Eval(position)` qui, à partir d'une position, nous renvoie un score.
+> Evidemment, simplement sommer le score des pièces montrera vite ses limites : parfois, deux positions égales en matériel ne sont pas égales, et parfois même, une position pourtant gagnante en matériel peut être une très mauvaise position.
+>
+> Pendant des années, les programmeurs ont donc imaginé des règles de plus en plus sophistiquées afin d'évaluer le plus finement possible une position : bonus de paire de fous, structure de pions, sécurité du roi... On peut rajouter autant de règles que l'on souhaite.
+>
+> Ecrire des règles à la main pour évaluer une position, cela s'appelle une **HCE** *(Hand Crafted Evaluation)*. Des techniques plus récentes utilisent des réseaux neuronaux afin d'améliorer la finesse de l'évaluation. Mais l'idée est la même : concevoir une fonction `Eval(position)` qui, à partir d'une position, nous renvoie un score.
 
 # Déterminer le meilleur coup : l'arbre de recherche
 

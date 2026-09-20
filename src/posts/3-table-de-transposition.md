@@ -38,43 +38,46 @@ Concrètement, la table de transposition stocke, pour chaque position déjà ren
 
 On peut se représenter la table de transposition comme un simple tableau, indexé par le hachage de la position, où chaque case regroupe ces informations :
 
-<table border="1" cellpadding="6" cellspacing="0">
+<figure>
+<table class="compact">
   <thead>
     <tr>
       <th>Hachage (clé)</th>
-      <th>Score</th>
-      <th>Profondeur</th>
+      <th class="num">Score</th>
+      <th class="num">Profondeur</th>
       <th>Meilleur coup</th>
       <th>Type</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td><code>0x3F2A...C1</code></td>
-      <td>+35</td>
-      <td>8</td>
+      <td><code>0x3F2A…C1</code></td>
+      <td class="num">+35</td>
+      <td class="num">8</td>
       <td>Nf3</td>
       <td>Exact</td>
     </tr>
     <tr>
-      <td><code>0x9B10...44</code></td>
-      <td>-120</td>
-      <td>5</td>
+      <td><code>0x9B10…44</code></td>
+      <td class="num">−120</td>
+      <td class="num">5</td>
       <td>Qxd5</td>
-      <td>Borne sup.</td>
+      <td>Borne supérieure</td>
     </tr>
     <tr>
-      <td><code>0x7E88...0D</code></td>
-      <td>+500</td>
-      <td>12</td>
+      <td><code>0x7E88…0D</code></td>
+      <td class="num">+500</td>
+      <td class="num">12</td>
       <td>Rxe8</td>
-      <td>Borne inf.</td>
+      <td>Borne inférieure</td>
     </tr>
-    <tr>
-      <td colspan="5">...</td>
+    <tr class="ellipsis">
+      <td colspan="5">⋮</td>
     </tr>
   </tbody>
 </table>
+<figcaption>Quelques entrées d'une table de transposition. Le hachage sert d'index, les autres champs sont le résultat de la recherche qui a rencontré cette position.</figcaption>
+</figure>
 
 Lorsqu'on rencontre une nouvelle position, on calcule son hachage, on regarde si une entrée existe déjà à cet emplacement dans le tableau, et on décide de la réutiliser, de la compléter ou de l'écraser selon les critères vus plus haut.
 
@@ -92,7 +95,7 @@ $$
 
 L'intérêt du `XOR` est qu'il permet de **mettre à jour le hachage incrémentalement** à chaque coup joué, sans avoir à le recalculer entièrement : il suffit de `XOR`-er les quelques nombres concernés par le coup joué (la case de départ, la case d'arrivée, une éventuelle pièce capturée...) plutôt que de reparcourir tout l'échiquier.
 
-*(Pour les matheux : cela fonctionne car le `XOR` est une involution, c'est-à-dire que $a \oplus a = 0$ et $a \oplus 0 = a$. Concrètement, cela signifie qu'appliquer deux fois le même `XOR` annule son effet : on peut donc "retirer" une pièce du hachage en la `XOR`-ant une seconde fois, exactement comme on l'a ajoutée.)*
+> Pour les matheux, cela fonctionne car le `XOR` est une involution : $a \oplus a = 0$ et $a \oplus 0 = a$. Concrètement, appliquer deux fois le même `XOR` annule son effet, on peut donc « retirer » une pièce du hachage en la `XOR`-ant une seconde fois, exactement comme on l'a ajoutée.
 
 Ce hachage devient alors la **clé** que l'on utilise pour stocker et retrouver une position dans la table de transposition.
 

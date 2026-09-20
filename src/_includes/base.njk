@@ -2,7 +2,15 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="color-scheme" content="light">
+<script>
+  // applique le theme avant la premiere peinture, pour eviter le clignotement
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem("theme") } catch (e) {}
+    if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {% set siteName = "Ce que développer un moteur d'échecs m'a appris" %}
 {% set siteDescription = "Les enseignements de programmation tirés du développement de Chess26, un moteur d'échecs écrit en C++23." %}
@@ -27,119 +35,319 @@
 <script type="module" src="https://cdn.jsdelivr.net/npm/chessboard-element@1.2.0/bundled/chessboard-element.bundled.js"></script>
 <script type="module">
   import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
-  mermaid.initialize({ startOnLoad: true, theme: "neutral", fontFamily: "Georgia, Times New Roman, serif" });
+  const blocks = document.querySelectorAll("pre.mermaid");
+  blocks.forEach(b => { b.dataset.src = b.textContent });
+  window.renderDiagrams = function () {
+    const dark = document.documentElement.dataset.theme === "dark";
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: dark ? "dark" : "neutral",
+      fontFamily: "Noto Sans, Segoe UI, Helvetica, Arial, sans-serif"
+    });
+    blocks.forEach(b => { b.textContent = b.dataset.src; b.removeAttribute("data-processed") });
+    mermaid.run({ nodes: blocks });
+  };
+  renderDiagrams();
 </script>
 <style>
-:root { color-scheme: light }
+:root {
+  color-scheme: light;
+  --outer: #f1efe9;
+  --page: #fff;
+  --fg: #111;
+  --muted: #555;
+  --faint: #777;
+  --border: #e0ddd4;
+  --hair: #e3e0d8;
+  --surface: #faf9f6;
+  --surface-border: #e6e3da;
+  --accent-bar: #c9c4b4;
+  --code-bg: #fafaf7;
+  --code-border: #ebe8e0;
+  --rule: #333;
+  --rule-soft: #eceae3;
+  --link: #0645ad;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --outer: #15171a;
+  --page: #1c1f24;
+  --fg: #e7e4de;
+  --muted: #a7a196;
+  --faint: #8d877c;
+  --border: #30343b;
+  --hair: #2c3037;
+  --surface: #23272d;
+  --surface-border: #333841;
+  --accent-bar: #4b525c;
+  --code-bg: #202429;
+  --code-border: #31363d;
+  --rule: #8d949e;
+  --rule-soft: #2e333a;
+  --link: #79a8f0;
+}
 
 *, *::before, *::after { box-sizing: border-box }
-html { background: #f1efe9 }
+html { background: var(--outer) }
 
-/* La page, posee sur le fond */
 body {
-  background: #fff;
-  color: #111;
-  font-family: "Latin Modern Roman", "Computer Modern", Georgia, "Times New Roman", serif;
-  font-size: 1.0625rem;
-  line-height: 1.52;
+  position: relative;
+  background: var(--page);
+  color: var(--fg);
+  font-family: "Noto Sans", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.75;
   max-width: 72rem;
   margin: 2.5rem auto;
-  padding: 3.5rem clamp(1.25rem, 6vw, 4rem) 4rem;
-  border: 1px solid #e0ddd4;
-  text-align: justify;
-  hyphens: auto;
+  padding: 3rem clamp(1.25rem, 5vw, 3.5rem) 4rem;
+  border: 1px solid var(--border);
 }
 
 @media (max-width: 77rem) {
   body { margin: 0; border: 0 }
 }
 
-/* Titre de page, facon page de garde */
+/* Titre de page */
 body > h1 {
-  font-size: 1.55rem;
-  line-height: 1.3;
-  text-align: center;
-  margin: 0 0 1.25rem;
+  font-size: 1.875rem;
+  line-height: 1.2;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--hair);
 }
 
-nav, footer, header {
-  font-size: 0.9rem;
-  text-align: center;
-}
+nav { font-size: 0.95rem; margin-bottom: 2.5rem }
+header { font-size: 0.95rem; color: var(--muted); margin-bottom: 2.5rem }
+header p { margin: 0 }
+footer { font-size: 0.95rem; color: var(--muted); text-align: center }
 
-nav { margin-bottom: 2.5rem }
-header { margin-bottom: 2rem; color: #555 }
-header p { text-indent: 0; margin: 0 }
+hr { border: 0; border-top: 1px solid var(--hair); margin: 2.5rem 0 }
 
-hr {
-  border: 0;
-  border-top: 1px solid #ddd;
-  margin: 2.5rem 0;
-}
+p { margin: 0 0 1.25rem }
+ul, ol { margin: 0 0 1.25rem; padding-left: 1.6rem }
+li { margin: 0.5rem 0 }
 
-/* Paragraphes a l indentation LaTeX, sans blanc entre eux */
-p { margin: 0; text-indent: 1.4em }
-p + p { margin-top: 1.15rem }
-h1 + p, h2 + p, h3 + p, blockquote + p, ul + p, ol + p,
-figure + p, pre + p, table + p, hr + p { text-indent: 0 }
-ul, ol, blockquote, figure, table, pre { margin: 1.1rem 0 }
-
-/* Sections numerotees dans les articles */
+/* Sections numerotees */
 article { counter-reset: section }
 article h1 {
   counter-reset: subsection;
-  font-size: 1.2rem;
-  margin: 2rem 0 0.6rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.34;
+  margin: 3rem 0 1.5rem;
 }
-article h2 { font-size: 1.05rem; margin: 1.5rem 0 0.5rem }
+article h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.6;
+  margin: 2rem 0 0.75rem;
+}
 article h1::before { counter-increment: section; content: counter(section) ". " }
 article h2::before { counter-increment: subsection; content: counter(section) "." counter(subsection) ". " }
 
-blockquote {
-  margin-left: 1.5rem;
-  margin-right: 1.5rem;
-  font-size: 0.95rem;
+/* Sommaire de l accueil : liste de liens, plus dense que du texte courant */
+.sommaire { margin-top: 3rem }
+.sommaire h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 2.75rem 0 0.25rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--hair);
 }
+.sommaire h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1.6rem 0 0.45rem;
+}
+.sommaire ul { list-style: none; margin: 0; padding: 0 }
+.sommaire li { margin: 0; line-height: 1.95 }
 
-figure { text-align: center }
-figcaption { font-size: 0.9rem; text-align: center; margin-top: 0.4rem }
+body > h2 { font-size: 1.5rem; font-weight: 700; line-height: 1.34; margin: 3rem 0 1.5rem }
+body > h3 { font-size: 1.25rem; font-weight: 600; line-height: 1.6; margin: 2rem 0 0.75rem }
+
+/* Cartouche : une seule apparence pour toutes les mises en aparte */
+blockquote, aside {
+  display: flow-root;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-left: 4px solid var(--accent-bar);
+  margin: 2rem 0;
+  padding: 1.25rem 1.5rem;
+  color: var(--fg);
+}
+blockquote > :last-child, aside > :last-child { margin-bottom: 0 }
+
+
+/* Separateur de partie */
+.partie {
+  clear: both;
+  text-align: center;
+  margin: 4.5rem 0 3rem;
+  padding: 1.6rem 0;
+  border-top: 1px solid var(--hair);
+  border-bottom: 1px solid var(--hair);
+}
+.partie span {
+  display: block;
+  font-size: 0.95rem;
+  font-style: italic;
+  color: var(--faint);
+  margin-bottom: 0.35rem;
+}
+.partie h2 {
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0;
+}
+.partie h2::before { content: none }
+
+/* Aparte depliable : le lecteur presse passe, le curieux ouvre */
+details.plus {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 2px;
+  margin: 2rem 0;
+  padding: 0 1.5rem;
+}
+details.plus > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.85rem 0;
+  list-style: none;
+}
+details.plus > summary::-webkit-details-marker { display: none }
+details.plus > summary::before {
+  content: "\25B8";
+  color: var(--faint);
+  display: inline-block;
+  width: 1.1em;
+}
+details.plus[open] > summary::before { content: "\25BE" }
+details.plus > summary::after {
+  content: "pour aller plus loin";
+  float: right;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+details.plus[open] > summary { border-bottom: 1px solid var(--surface-border) }
+details.plus[open] { padding-bottom: 0.5rem }
+details.plus > summary + * { margin-top: 1.1rem }
+
+figure { text-align: center; margin: 1rem 0 3rem }
+
+/* Schema etroit place a cote du texte */
+figure.side {
+  float: right;
+  width: min(40%, 24rem);
+  margin: 0.25rem 0 1.5rem 2.5rem;
+}
+article h1, article h2 { clear: both }
+@media (max-width: 58rem) {
+  figure.side { float: none; width: auto; margin: 1rem auto 3rem }
+}
+/* chessboard-element reserve 50px de vide sous le plateau : on ramene l element au carre */
+figure chess-board {
+  display: block;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+}
+figcaption {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin: 0.55rem auto 0;
+  max-width: 34rem;
+  line-height: 1.5;
+}
 .mermaid, pre.mermaid { text-align: center; overflow-x: auto }
 
-/* Tableaux facon booktabs : filets horizontaux seulement */
+/* Les schemas SVG faits main sont dessines en couleurs claires : fond clair conserve */
+:root[data-theme="dark"] figure > svg {
+  background: #f7f6f2;
+  border-radius: 3px;
+  padding: 0.75rem;
+}
+
+/* Bascule clair / sombre */
+.theme-toggle {
+  position: absolute;
+  top: 1.35rem;
+  right: 1.35rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  color: var(--faint);
+  cursor: pointer;
+}
+.theme-toggle:hover { color: var(--fg); background: var(--surface) }
+.theme-toggle svg { display: block }
+.theme-toggle .i-sun { display: none }
+:root[data-theme="dark"] .theme-toggle .i-sun { display: block }
+:root[data-theme="dark"] .theme-toggle .i-moon { display: none }
+
+/* Tableaux : filets horizontaux seulement, facon booktabs */
 table {
   border-collapse: collapse;
   font-size: 0.95rem;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 2rem auto;
+  min-width: min(100%, 44rem);
 }
 table, td, th { border: 0 !important }
-thead { border-top: 1px solid #111; border-bottom: 1px solid #111 }
-tbody { border-bottom: 1px solid #111 }
-th, td { padding: 0.35rem 0.9rem; text-align: left }
+thead th {
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-bottom: 0.55rem;
+}
+thead { border-bottom: 1.5px solid var(--rule) }
+tbody { border-bottom: 1.5px solid var(--rule) }
+tbody tr + tr { border-top: 1px solid var(--rule-soft) }
+th, td { padding: 0.5rem 1.3rem; text-align: left; vertical-align: baseline }
+th:first-child, td:first-child { padding-left: 0 }
+th:last-child, td:last-child { padding-right: 0 }
+.num { text-align: right; font-variant-numeric: tabular-nums }
+table.compact th, table.compact td { white-space: nowrap }
+tr.ellipsis td { text-align: center; color: var(--faint); border-top: 0 }
+table code { font-size: 0.86em; color: var(--muted) }
 
 code, pre {
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 0.88em;
+  font-size: 0.9em;
 }
 pre {
-  background: #fafaf7;
-  border: 1px solid #ebe8e0;
-  padding: 0.7rem 0.9rem;
+  display: flow-root;
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  font-size: 0.875rem;
+  line-height: 1.72;
+  margin: 1.5rem 0;
+  padding: 0.75rem 1rem;
   overflow-x: auto;
-  text-align: left;
-  line-height: 1.45;
 }
 pre.mermaid { background: none; border: 0; padding: 0 }
 
-a { color: #00308f }
+a { color: var(--link) }
 
 /* Navigation de bas d article */
 .postnav {
   display: flex;
   justify-content: space-between;
   gap: 2.5rem;
-  text-align: left;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 .postnav div { flex: 1 }
 .postnav div:last-child { text-align: right }
@@ -148,15 +356,9 @@ a { color: #00308f }
   font-size: 0.78rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #777;
-  margin-bottom: 0.15rem;
+  color: var(--faint);
 }
-.backlink {
-  text-indent: 0;
-  text-align: center;
-  margin-top: 2.5rem;
-  font-size: 0.9rem;
-}
+.backlink { text-align: center; margin-top: 2.5rem; font-size: 0.95rem }
 
 @media (max-width: 30rem) {
   .postnav { flex-direction: column; gap: 1.25rem }
@@ -165,6 +367,16 @@ a { color: #00308f }
 </style>
 </head>
 <body>
+
+<button type="button" class="theme-toggle" onclick="toggleTheme()" title="Basculer le thème" aria-label="Basculer entre le thème clair et le thème sombre">
+  <svg class="i-moon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>
+  </svg>
+  <svg class="i-sun" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="4.2"/>
+    <path d="M12 2.6v2.1M12 19.3v2.1M4.4 4.4l1.5 1.5M18.1 18.1l1.5 1.5M2.6 12h2.1M19.3 12h2.1M4.4 19.6l1.5-1.5M18.1 5.9l1.5-1.5"/>
+  </svg>
+</button>
 
 <h1>{{ title }}</h1>
 
@@ -182,6 +394,15 @@ a { color: #00308f }
 <footer>
 <p>&copy; 2026 Emeric Braud &middot; <a href="https://github.com/EmericBraud/chess26">Chess26 sur GitHub</a></p>
 </footer>
+
+<script>
+  function toggleTheme() {
+    var next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("theme", next) } catch (e) {}
+    if (window.renderDiagrams) renderDiagrams();
+  }
+</script>
 
 </body>
 </html>

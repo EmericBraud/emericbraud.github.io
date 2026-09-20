@@ -12,6 +12,16 @@ module.exports = function (eleventyConfig) {
     </figure>`
   );
 
+  // Separateur de partie
+  eleventyConfig.addShortcode("partie", (numero, titre) =>
+    `<div class="partie"><span>${numero}</span><h2>${titre}</h2></div>`
+  );
+
+  // Bloc depliable : le lecteur presse passe, le curieux ouvre
+  eleventyConfig.addPairedShortcode("plus", (content, titre) =>
+    `<details class="plus">\n<summary>${titre}</summary>\n\n${content.trim()}\n\n</details>`
+  );
+
   eleventyConfig.addFilter("readableDate", (date) =>
     new Date(date).toLocaleDateString("fr-FR", { year: "numeric", month: "long", day: "numeric" })
   );

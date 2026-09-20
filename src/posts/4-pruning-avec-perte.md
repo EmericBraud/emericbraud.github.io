@@ -33,10 +33,12 @@ Aux échecs, passer son tour n'est pas un coup légal, mais rien n'empêche de l
 
 <pre class="mermaid">
 graph TD
-  P0["Position (trait aux blancs)"]
-  P0 -->|"coup nul"| N["Recherche à profondeur réduite"]
-  N -->|"score ≥ β"| C["Coupure : on suppose la position gagnante"]
-  P0 -->|"sinon"| E["Recherche normale des coups"]
+  P0["Position à explorer, profondeur d"]
+  P0 --> NM["On passe son tour :<br/>l'adversaire joue le premier"]
+  NM --> N["Recherche à profondeur réduite<br/>d − 1 − R"]
+  N --> Q{"score ≥ β ?"}
+  Q -->|oui| C["Coupure : on renvoie β<br/>sans explorer les coups réels"]
+  Q -->|non| E["Le test n'a rien prouvé :<br/>recherche normale de tous les coups"]
 </pre>
 
 On économise ainsi l'exploration de tout un sous-arbre, au prix d'un risque : dans une position de zugzwang, ce raisonnement est faux, et on peut couper une branche qui aurait révélé un problème. C'est précisément le sens du mot "perte" dans "pruning avec perte".

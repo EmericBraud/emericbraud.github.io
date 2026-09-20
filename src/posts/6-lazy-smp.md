@@ -13,8 +13,8 @@ Toutes les optimisations vues jusqu'ici cherchaient à explorer **moins de nœud
 Le problème est que l'alpha-bêta se parallélise très mal. Sa force vient précisément de sa nature **séquentielle** : le résultat du premier coup exploré fournit la borne $\alpha$ qui permet de couper les suivants. Si on distribue les coups d'un nœud sur plusieurs threads en parallèle, chacun démarre avec une fenêtre $[\alpha, \beta]$ plus large que nécessaire, coupe donc moins, et explore un sous-arbre bien plus gros que celui qu'un parcours séquentiel aurait visité.
 
 > On ne cherche donc pas à répartir un travail fixe entre $N$ threads. Le travail total **augmente** avec le nombre de threads : tout l'enjeu est que cette surcharge reste inférieure au gain apporté par le parallélisme.
-
-Cette perte d'efficacité porte un nom : le **search overhead**. Avec $N$ threads, on n'obtient jamais un facteur $N$ ; un bon moteur atteint typiquement un facteur `2.5` à `3` sur 4 threads.
+>
+> Cette perte d'efficacité porte un nom : le **search overhead**. Avec $N$ threads, on n'obtient jamais un facteur $N$ ; un bon moteur atteint typiquement un facteur `2.5` à `3` sur 4 threads.
 
 # Les approches historiques
 
@@ -24,15 +24,46 @@ L'algorithme **Young Brothers Wait Concept** (YBWC) formalise l'intuition ci-des
 
 C'est théoriquement satisfaisant, mais coûteux en pratique : il faut synchroniser les threads à chaque nœud partagé, gérer la répartition dynamique du travail, et propager les mises à jour de bornes. Le code de recherche devient considérablement plus complexe, et les points de synchronisation limitent le passage à l'échelle.
 
-<pre class="mermaid">
-graph TD
-  N["Noeud"]
-  N --> A["Coup 1 : explore seul<br/>(etablit alpha)"]
-  A --> S["Synchronisation"]
-  S --> B["Coup 2<br/>thread 1"]
-  S --> C["Coup 3<br/>thread 2"]
-  S --> D["Coup 4<br/>thread 3"]
-</pre>
+<figure>
+<svg viewBox="0 0 760 268" width="100%" style="max-width:760px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="YBWC : le premier coup est explore seul, puis les coups restants sont distribues sur les threads">
+<style>
+  text { font-family: "Noto Sans", -apple-system, Helvetica, sans-serif }
+  .ph { font-size: 11px; font-weight: 600; letter-spacing: .06em; fill: #8a8372; text-anchor: middle; text-transform: uppercase }
+  .lane { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; text-anchor: end }
+  .rail { stroke: #ebe7dc }
+  .bar { font-size: 12px; font-weight: 600; text-anchor: middle }
+  .bar.s { text-anchor: start }
+  .wait { font-size: 11px; fill: #b3ab9b; text-anchor: middle; font-style: italic }
+  .sync { stroke: #9c5b4a; stroke-width: 1.4; stroke-dasharray: 5 4 }
+  .synct { font-size: 11px; fill: #9c5b4a; text-anchor: middle; font-weight: 600 }
+  .axis { fill: none; stroke: #ded9cd }
+</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#ded9cd"/></marker></defs>
+<text x="245.0" y="34" class="ph">1. séquentiel</text>
+<text x="563.0" y="34" class="ph">2. parallèle</text>
+<text x="92" y="86.0" class="lane" fill="#3f6b9c">thread 1</text>
+<line x1="104" y1="82.0" x2="740" y2="82.0" class="rail"/>
+<text x="92" y="132.0" class="lane" fill="#4a7f6b">thread 2</text>
+<line x1="104" y1="128.0" x2="740" y2="128.0" class="rail"/>
+<text x="92" y="178.0" class="lane" fill="#a9762f">thread 3</text>
+<line x1="104" y1="174.0" x2="740" y2="174.0" class="rail"/>
+<rect x="104" y="68" width="274" height="28" fill="#eaf0f7" stroke="#3f6b9c"/>
+<text x="241.0" y="86.0" class="bar" fill="#3f6b9c">coup 1, exploré seul</text>
+<text x="241.0" y="132.0" class="wait">en attente</text>
+<text x="241.0" y="178.0" class="wait">en attente</text>
+<line x1="386" y1="52" x2="386" y2="198" class="sync"/>
+<text x="386" y="216" class="synct">borne α connue</text>
+<rect x="394" y="68" width="222" height="28" fill="#eaf0f7" stroke="#3f6b9c"/>
+<text x="406" y="86.0" class="bar s" fill="#3f6b9c">coup 2</text>
+<rect x="394" y="114" width="292" height="28" fill="#e9f2ee" stroke="#4a7f6b"/>
+<text x="406" y="132.0" class="bar s" fill="#4a7f6b">coup 3</text>
+<rect x="394" y="160" width="172" height="28" fill="#f9f1e3" stroke="#a9762f"/>
+<text x="406" y="178.0" class="bar s" fill="#a9762f">coup 4</text>
+<path d="M104 242 H740" class="axis" marker-end="url(#a)"/>
+<text x="740" y="236" class="wait" text-anchor="end">temps</text>
+</svg>
+<figcaption>YBWC explore d'abord le premier coup seul, le temps d'obtenir une borne fiable ; les threads restent inactifs pendant ce temps, puis se partagent les coups suivants avec une fenêtre déjà resserrée.</figcaption>
+</figure>
 
 # Lazy SMP : ne rien partager, ou presque
 
@@ -62,7 +93,7 @@ sequenceDiagram
   Note over T2: n'explore pas P
 </pre>
 
-Pour accentuer volontairement la divergence, la plupart des implémentations désynchronisent légèrement les threads : certains démarrent à une profondeur décalée, ou sautent des profondeurs, de sorte qu'ils ne cherchent jamais exactement la même itération au même moment.
+> Pour accentuer volontairement la divergence, la plupart des implémentations désynchronisent légèrement les threads : certains démarrent à une profondeur décalée, ou sautent des profondeurs, de sorte qu'ils ne cherchent jamais exactement la même itération au même moment.
 
 # Les accès concurrents à la table
 
@@ -71,8 +102,8 @@ Partager la table de transposition entre threads soulève une difficulté. Une e
 La réponse habituelle est... de ne rien faire. On accepte ces corruptions rares, en s'appuyant sur le fait que la clé de Zobrist stockée sert déjà de vérification : une entrée mélangée a une probabilité écrasante d'échouer à la comparaison de clé, et est donc simplement ignorée. Les rares cas qui passent au travers introduisent une erreur dans une branche, qu'une recherche à profondeur supérieure corrigera le plus souvent.
 
 > Verrouiller la table serait catastrophique : c'est la structure la plus sollicitée du moteur, et un verrou global annulerait tout le bénéfice du parallélisme.
-
-Certains moteurs réduisent tout de même le risque en stockant un petit *checksum* dans l'entrée, ou en regroupant les champs de manière à ce que l'ensemble tienne dans une écriture atomique de 128 bits.
+>
+> Certains moteurs réduisent tout de même le risque en stockant un petit *checksum* dans l'entrée, ou en regroupant les champs de manière à ce que l'ensemble tienne dans une écriture atomique de 128 bits.
 
 # Récupérer le résultat
 
