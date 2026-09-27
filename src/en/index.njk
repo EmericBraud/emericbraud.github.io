@@ -1,0 +1,36 @@
+---
+translationKey: home
+layout: base.njk
+title: What building a chess engine taught me
+permalink: /en/
+---
+<img class="logo" src="/assets/logo.png" alt="Alcyon logo: a kingfisher diving toward the water" width="320" height="320">
+
+<p>I am building <a href="https://github.com/EmericBraud/alcyon">Alcyon</a>, a chess engine written in C++23. The main purpose of this blog is to record what I learn along the way.</p>
+
+<p>A chess engine is a great place to learn, because it forgives nothing:</p>
+
+<ul>
+<li>algorithmic complexity becomes tangible: every optimization shows up as search depth gained;</li>
+<li>the cost of a memory access stops being a detail the day a lookup table, meant to avoid a computation, turns out more expensive than that computation because it does not fit in the cache;</li>
+<li>parallelism shows its real limits when synchronization costs more than it brings;</li>
+<li>nothing can be claimed without measurement: an improvement can only be proven statistically, over thousands of games.</li>
+</ul>
+
+<p>These problems go well beyond chess: they arise in any program where performance and correctness matter.</p>
+
+<p>The articles therefore start from chess, but aim to explore the underlying programming concepts. The first section explains how a chess engine works in general, and sets the context of the project. The following sections explore more general concepts, and can be read independently.</p>
+
+<nav class="sommaire">
+{% for sectionName, sectionPosts in collections.postsEn | groupby("data.section") %}
+<h2>{{ sectionName }}</h2>
+{% for chapterName, posts in sectionPosts | groupby("data.chapter") %}
+<h3>{{ chapterName }}</h3>
+<ul>
+{% for post in posts %}
+<li><a href="{{ post.url }}">{{ post.data.title }}</a></li>
+{% endfor %}
+</ul>
+{% endfor %}
+{% endfor %}
+</nav>

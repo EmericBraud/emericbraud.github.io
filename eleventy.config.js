@@ -1,10 +1,14 @@
 module.exports = function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy("src/assets");
 
-  eleventyConfig.addCollection("posts", (collectionApi) => {
-    return collectionApi
-      .getFilteredByGlob("src/posts/*.md")
-      .sort((a, b) => a.date - b.date || (a.data.chapterOrder ?? 0) - (b.data.chapterOrder ?? 0));
+  const byOrder = (a, b) => a.date - b.date || (a.data.chapterOrder ?? 0) - (b.data.chapterOrder ?? 0);
+  eleventyConfig.addCollection("posts", (api) => api.getFilteredByGlob("src/posts/*.md").sort(byOrder));
+  eleventyConfig.addCollection("postsEn", (api) => api.getFilteredByGlob("src/en/posts/*.md").sort(byOrder));
+
+  // Meme page dans l'autre langue, retrouvee par sa translationKey ; a defaut, l'accueil de l'autre langue
+  eleventyConfig.addFilter("translationUrl", (all, key, lang) => {
+    const other = all.find((p) => p.data.translationKey === key && p.data.lang !== lang);
+    return other ? other.url : lang === "en" ? "/" : "/en/";
   });
 
   eleventyConfig.addShortcode("fen", (fen, orientation = "white", caption = "") =>
@@ -24,8 +28,8 @@ module.exports = function (eleventyConfig) {
     `<details class="plus">\n<summary>${titre}</summary>\n\n${content.trim()}\n\n</details>`
   );
 
-  eleventyConfig.addFilter("readableDate", (date) =>
-    new Date(date).toLocaleDateString("fr-FR", { year: "numeric", month: "long", day: "numeric" })
+  eleventyConfig.addFilter("readableDate", (date, locale = "fr-FR") =>
+    new Date(date).toLocaleDateString(locale, { year: "numeric", month: "long", day: "numeric" })
   );
 
   return {

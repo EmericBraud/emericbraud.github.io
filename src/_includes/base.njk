@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="fr">
+{% set t = i18n[lang] %}
+{% set altHref = collections.all | translationUrl(translationKey, lang) %}
+<html lang="{{ lang }}">
 <head>
 <meta charset="UTF-8">
 <script>
@@ -12,18 +14,21 @@
   })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-{% set siteName = "Ce que développer un moteur d'échecs m'a appris" %}
-{% set siteDescription = "Les enseignements de programmation tirés du développement d'Alcyon, un moteur d'échecs écrit en C++23." %}
+{% set siteName = t.siteName %}
+{% set siteDescription = t.siteDescription %}
 {% set pageDescription = description or siteDescription %}
 <title>{% if title != siteName %}{{ title }} - {% endif %}{{ siteName }}</title>
 <meta name="description" content="{{ pageDescription }}">
 <meta name="author" content="Emeric Braud">
 <meta property="og:type" content="{% if layout == "post.njk" %}article{% else %}website{% endif %}">
 <meta property="og:site_name" content="{{ siteName }}">
+<meta property="og:locale" content="{{ t.ogLocale }}">
 <meta property="og:title" content="{{ title }}">
 <meta property="og:description" content="{{ pageDescription }}">
 <meta name="twitter:card" content="summary">
 <meta property="og:image" content="https://emericbraud.github.io/assets/og-image.png">
+<link rel="alternate" hreflang="{{ lang }}" href="https://emericbraud.github.io{{ page.url }}">
+<link rel="alternate" hreflang="{{ 'fr' if lang == 'en' else 'en' }}" href="https://emericbraud.github.io{{ altHref }}">
 <link rel="icon" type="image/png" href="/assets/favicon.png">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
@@ -229,6 +234,7 @@ details.plus > summary::before {
   width: 1.1em;
 }
 details.plus[open] > summary::before { content: "\25BE" }
+html[lang="en"] details.plus > summary::after { content: "going further" }
 details.plus > summary::after {
   content: "pour aller plus loin";
   float: right;
@@ -361,6 +367,22 @@ a { color: var(--link) }
   text-transform: uppercase;
   color: var(--faint);
 }
+/* Choix de la langue, a gauche du bouton de theme */
+.lang-switch {
+  position: absolute;
+  top: 1.35rem;
+  right: 3.75rem;
+  margin: 0;
+  line-height: 2rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.lang-switch a { color: var(--muted); text-decoration: none }
+.lang-switch a:hover { color: var(--fg) }
+.lang-switch [aria-current] { color: var(--fg); font-weight: 600 }
+footer .translated { font-size: 0.8rem; font-style: italic; margin-top: 0.5rem }
+
 /* Logo du moteur, en tete de l accueil */
 .logo { float: right; width: 9rem; height: auto; margin: 0 0 1rem 2rem }
 @media (max-width: 30rem) {
@@ -376,7 +398,7 @@ a { color: var(--link) }
 </head>
 <body>
 
-<button type="button" class="theme-toggle" onclick="toggleTheme()" title="Basculer le thème" aria-label="Basculer entre le thème clair et le thème sombre">
+<button type="button" class="theme-toggle" onclick="toggleTheme()" title="{{ t.themeTitle }}" aria-label="{{ t.themeLabel }}">
   <svg class="i-moon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>
   </svg>
@@ -386,11 +408,16 @@ a { color: var(--link) }
   </svg>
 </button>
 
+<p class="lang-switch" aria-label="{{ t.langLabel }}">
+{% if lang == "fr" %}<span aria-current="true">FR</span> · <a href="{{ altHref }}" hreflang="en" lang="en">EN</a>
+{% else %}<a href="{{ altHref }}" hreflang="fr" lang="fr">FR</a> · <span aria-current="true">EN</span>{% endif %}
+</p>
+
 <h1>{{ title }}</h1>
 
 <nav>
-<a href="/">Accueil</a> |
-<a href="/about/">A propos</a>
+<a href="{{ t.root }}">{{ t.home }}</a> |
+<a href="{{ t.root }}about/">{{ t.about }}</a>
 </nav>
 
 <hr>
@@ -400,7 +427,8 @@ a { color: var(--link) }
 <hr>
 
 <footer>
-<p>&copy; 2026 Emeric Braud &middot; <a href="https://github.com/EmericBraud/alcyon">Alcyon sur GitHub</a></p>
+<p>&copy; 2026 Emeric Braud &middot; <a href="https://github.com/EmericBraud/alcyon">{{ t.github }}</a></p>{% if t.translated %}
+<p class="translated">{{ t.translated }}</p>{% endif %}
 </footer>
 
 <script>

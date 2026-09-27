@@ -1,12 +1,14 @@
 ---
 layout: base.njk
 ---
-{% set prevPost = collections.posts | getPreviousCollectionItem %}
-{% set nextPost = collections.posts | getNextCollectionItem %}
+{% set t = i18n[lang] %}
+{% set list = collections.postsEn if lang == "en" else collections.posts %}
+{% set prevPost = list | getPreviousCollectionItem %}
+{% set nextPost = list | getNextCollectionItem %}
 
 <header>
-<p><a href="/">{{ section }}</a> &rarr; {{ chapter }}</p>
-<p><em>Publié le {{ date | readableDate }}</em></p>
+<p><a href="{{ t.root }}">{{ section }}</a> &rarr; {{ chapter }}</p>
+<p><em>{{ t.published }} {{ date | readableDate(t.locale) }}</em></p>
 </header>
 
 <article>
@@ -16,8 +18,8 @@ layout: base.njk
 <hr>
 
 <nav class="postnav">
-  <div>{% if prevPost %}<span>Précédent</span><a href="{{ prevPost.url }}">&larr; {{ prevPost.data.title }}</a>{% endif %}</div>
-  <div>{% if nextPost %}<span>Suivant</span><a href="{{ nextPost.url }}">{{ nextPost.data.title }} &rarr;</a>{% endif %}</div>
+  <div>{% if prevPost %}<span>{{ t.previous }}</span><a href="{{ prevPost.url }}">&larr; {{ prevPost.data.title }}</a>{% endif %}</div>
+  <div>{% if nextPost %}<span>{{ t.next }}</span><a href="{{ nextPost.url }}">{{ nextPost.data.title }} &rarr;</a>{% endif %}</div>
 </nav>
 
-<p class="backlink"><a href="/">Retour à la liste des articles</a></p>
+<p class="backlink"><a href="{{ t.root }}">{{ t.backlink }}</a></p>
