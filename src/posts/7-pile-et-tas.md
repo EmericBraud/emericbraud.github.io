@@ -6,7 +6,7 @@ section: Techniques de programmation
 chapter: Gestion de la mémoire
 chapterOrder: 7
 ---
-Durant le développement d'[Alcyon](https://github.com/EmericBraud/chess26), j'ai été amené à approfondir ma compréhension du fonctionnement de la mémoire dans un programme. Ces concepts semblent très abstraits quand on développe en Python ou que l'on travaille avec un framework JavaScript, mais deviennent incontournables dès que l'on descend d'un niveau et que l'on cherche de la performance.
+Durant le développement d'[Alcyon](https://github.com/EmericBraud/alcyon), j'ai été amené à approfondir ma compréhension du fonctionnement de la mémoire dans un programme. Ces concepts semblent très abstraits quand on développe en Python ou que l'on travaille avec un framework JavaScript, mais deviennent incontournables dès que l'on descend d'un niveau et que l'on cherche de la performance.
 
 Un programme dispose de deux zones principales pour stocker les données créées pendant l'exécution : la **pile** *(stack)* et le **tas** *(heap)*. Ces deux zones mémoire vivent dans la RAM et ont des propriétés structurelles très différentes et complémentaires.
 
@@ -350,7 +350,7 @@ La fonction de recherche d'un moteur d'échecs est appelée plusieurs millions d
 
 La règle est donc absolue : **aucune allocation dynamique sur le chemin critique**. En pratique, cela veut dire :
 
-- les listes de coups sont des tableaux de taille fixe sur la pile, dimensionnés au pire cas : le maximum théorique est de 218 coups légaux dans une position. Alcyon réserve [256 entrées](https://github.com/EmericBraud/chess26/blob/main/src/common/constants.hpp#L7), que la [`MoveList`](https://github.com/EmericBraud/chess26/blob/main/src/core/move/move_list.hpp#L7-L11) déclare en tableaux bruts ;
+- les listes de coups sont des tableaux de taille fixe sur la pile, dimensionnés au pire cas : le maximum théorique est de 218 coups légaux dans une position. Alcyon réserve [256 entrées](https://github.com/EmericBraud/alcyon/blob/main/src/common/constants.hpp#L7), que la [`MoveList`](https://github.com/EmericBraud/alcyon/blob/main/src/core/move/move_list.hpp#L7-L11) déclare en tableaux bruts ;
 - les structures indexées par profondeur, comme les [killer moves](/posts/5-move-ordering/) ou l'historique de la partie, sont des tableaux préalloués une fois pour toutes ;
 - les objets par thread sont alloués à la création du thread, jamais pendant la recherche ;
 - les gros objets (table de transposition, poids du réseau de neurones, tables précalculées de génération de coups) sont alloués une seule fois, au démarrage. Entre deux recherches, la table n'est même pas vidée : un compteur d'âge suffit à reconnaître les entrées obsolètes.

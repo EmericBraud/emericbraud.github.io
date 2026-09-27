@@ -1,4 +1,6 @@
 module.exports = function (eleventyConfig) {
+  eleventyConfig.addPassthroughCopy("src/assets");
+
   eleventyConfig.addCollection("posts", (collectionApi) => {
     return collectionApi
       .getFilteredByGlob("src/posts/*.md")

@@ -23,6 +23,9 @@
 <meta property="og:title" content="{{ title }}">
 <meta property="og:description" content="{{ pageDescription }}">
 <meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://emericbraud.github.io/assets/og-image.png">
+<link rel="icon" type="image/png" href="/assets/favicon.png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
@@ -358,6 +361,11 @@ a { color: var(--link) }
   text-transform: uppercase;
   color: var(--faint);
 }
+/* Logo du moteur, en tete de l accueil */
+.logo { float: right; width: 9rem; height: auto; margin: 0 0 1rem 2rem }
+@media (max-width: 30rem) {
+  .logo { float: none; display: block; margin: 0 auto 1.5rem }
+}
 .backlink { text-align: center; margin-top: 2.5rem; font-size: 0.95rem }
 
 @media (max-width: 30rem) {
@@ -392,7 +400,7 @@ a { color: var(--link) }
 <hr>
 
 <footer>
-<p>&copy; 2026 Emeric Braud &middot; <a href="https://github.com/EmericBraud/chess26">Alcyon sur GitHub</a></p>
+<p>&copy; 2026 Emeric Braud &middot; <a href="https://github.com/EmericBraud/alcyon">Alcyon sur GitHub</a></p>
 </footer>
 
 <script>
