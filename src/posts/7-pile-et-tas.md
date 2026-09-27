@@ -6,9 +6,9 @@ section: Techniques de programmation
 chapter: Gestion de la mémoire
 chapterOrder: 7
 ---
-Durant le développement de [Chess26](https://github.com/EmericBraud/chess26), j'ai été amené à approfondir ma compréhension du fonctionnement de la mémoire dans un programme. Ces concepts sont de peu d'utilité quand on développe en Python ou que l'on travaille avec un framework JavaScript, mais deviennent incontournables dès que l'on descend d'un niveau et que l'on cherche de la performance.
+Durant le développement de [Chess26](https://github.com/EmericBraud/chess26), j'ai été amené à approfondir ma compréhension du fonctionnement de la mémoire dans un programme. Ces concepts semblent très abstraits quand on développe en Python ou que l'on travaille avec un framework JavaScript, mais deviennent incontournables dès que l'on descend d'un niveau et que l'on cherche de la performance.
 
-Un programme dispose de deux endroits pour stocker ses données : la **pile** *(stack)* et le **tas** *(heap)*. Ces deux zones mémoire vivent dans la RAM et ont des propriétés structurelles très différentes et complémentaires.
+Un programme dispose de deux zones principales pour stocker les données créées pendant l'exécution : la **pile** *(stack)* et le **tas** *(heap)*. Ces deux zones mémoire vivent dans la RAM et ont des propriétés structurelles très différentes et complémentaires.
 
 <figure id="carte-memoire">
 <svg viewBox="0 0 620 410" width="100%" style="max-width:620px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Carte memoire d un programme : code, donnees globales, tas, espace libre, pile">
@@ -59,15 +59,13 @@ Un programme dispose de deux endroits pour stocker ses données : la **pile** *(
 <figcaption>Les deux zones se font face et grandissent l'une vers l'autre, en se partageant le même espace libre.</figcaption>
 </figure>
 
+C'est le schéma classique que chaque développeur étudie au moins une fois. On voit la séparation en mémoire entre ces deux zones, mais l'on ne comprend pas nécessairement ce qu'elle implique ni comment elle se matérialise.
+
 {% partie "Première partie", "Comment la mémoire fonctionne" %}
 
 # La pile
 
-La pile est celle que l'on utilise **par défaut**, souvent sans le savoir : toute variable locale à une fonction, tout paramètre, toute valeur de retour y atterrit sans qu'on ait rien demandé. Écrire `int score = 0;` dans une fonction, c'est allouer sur la pile.
-
-> **Le cas des langages interprétés.** En Python, le programme qui s'exécute réellement sur la machine n'est pas celui que l'on écrit : c'est l'interpréteur, qui lit ce code et l'exécute au fur et à mesure. La pile de la machine est donc celle de l'interpréteur, pas celle du programme.
->
-> Les variables déclarées dans le code, elles, désignent des objets alloués sur le tas, et ne sont que des références vers eux. C'est le sens de la formule « en Python, tout est un objet », aux quelques exceptions près que l'implémentation se réserve.
+La pile est la zone mémoire que le programme utilise **par défaut** : toute variable locale à une fonction, tout paramètre, toute valeur de retour y atterrit sans que l'on ait rien demandé. Écrire `int score = 0;` dans une fonction, c'est allouer sur la pile.
 
 <figure class="side">
 <svg viewBox="0 0 382 403" width="100%" style="max-width:382px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="La pile : un cadre colore par fonction appelee, une case par variable locale">
@@ -130,25 +128,85 @@ La pile est celle que l'on utilise **par défaut**, souvent sans le savoir : tou
 <figcaption>Chaque appel empile un cadre, une case par variable locale ; le retour dépile le tout d'un coup.</figcaption>
 </figure>
 
-C'est une zone contiguë de mémoire, propre à chaque thread, gérée par un simple pointeur. Entrer dans une fonction réserve la place des variables locales en déplaçant ce pointeur, en sortir le remet où il était. Une allocation sur la pile coûte donc une instruction arithmétique, et sa libération n'a littéralement aucun coût. Comme les appels successifs réutilisent sans cesse les mêmes adresses, le sommet de la pile est presque toujours déjà dans le cache L1.
+C'est une zone contiguë de mémoire _(un seul bloc)_, propre à chaque thread, gérée par un simple pointeur. Entrer dans une fonction réserve la place des variables locales en déplaçant ce pointeur, en sortir le remet où il était. Une allocation sur la pile coûte donc une instruction arithmétique, et sa libération n'a littéralement aucun coût.
 
-> Par convention sur les architectures courantes, la pile croît vers les adresses **décroissantes** : le prologue d'une fonction décrémente le pointeur de pile, et son épilogue le réincrémente d'autant. Le mot « pile » décrit donc l'empilement des appels, pas le sens de progression en mémoire.
+On peut voir la pile comme un livre dans lequel on suivrait la page actuelle via un marque-page : à chaque nouvel appel de fonction, on avance le marque-page proportionnellement au poids des variables locales à cette fonction, et une fois qu'on quitte la fonction, on recule le marque-page du même nombre de pages pour revenir précisément où on en était.
 
-On peut voir la pile comme un livre dans lequel on suivrait la page actuelle via un marque-page : à chaque nouvel appel de fonction, on avance le marque-page d'un nombre de pages équivalent au poids des variables locales à cette fonction, et une fois qu'on quitte la fonction, on recule le marque-page du même nombre de pages.
+Cette simplicité est précisément ce qui la rend rapide, et c'est aussi ce qui lui impose deux limites dont on ne peut s'affranchir.
 
-
-
-Cette simplicité est précisément ce qui la rend rapide, et c'est aussi ce qui lui impose deux limites dont on ne peut pas sortir.
-
-**La taille de chaque variable doit être connue d'avance.** Puisque entrer dans une fonction se résume à déplacer le marque-page d'un nombre de pages fixé, le compilateur doit savoir, à la compilation, de combien le déplacer. On ne peut donc pas réserver sur la pile un tableau dont la taille ne sera connue qu'à l'exécution, ni faire grandir une structure au fil du programme. De la même façon, tout ce qui est alloué dans une fonction disparaît à sa sortie : une donnée qui doit **survivre** à la fonction qui l'a créée n'a rien à faire sur la pile, y renvoyer un pointeur est une des erreurs classiques en C++.
+**La taille de chaque variable doit être connue d'avance.** La mémoire nécessaire à chaque fonction est fixée dès la compilation.
 
 **La pile est petite.** Là où le tas peut occuper toute la mémoire disponible, la pile est plafonnée à sa réservation initiale, souvent 1 à 8 Mo par thread. C'est confortable pour des variables locales, mais très vite insuffisant dès qu'on manipule de vrais volumes de données : la [table de transposition](/posts/3-table-de-transposition/) d'un moteur d'échecs, plusieurs centaines de mégaoctets, n'y tiendrait évidemment pas.
 
-> Le dépassement de cette limite, le fameux *stack overflow*, ne se signale pas par un code d'erreur que l'on pourrait traiter : le programme s'arrête net. Les deux causes habituelles sont une récursion trop profonde et un gros tableau déclaré en variable locale.
+Le dépassement de cette limite, le fameux *stack overflow*, ne se signale pas par un code d'erreur que l'on pourrait traiter : le programme s'arrête net. Les deux causes habituelles sont une récursion trop profonde et un gros tableau déclaré en variable locale.
 
-C'est pour ces deux raisons, et pour elles seules, que l'autre zone existe.
+C'est pour ces deux raisons, que l'autre zone existe.
+
+{% plus "Quelques précisions sur la pile" %}
+
+Comme les appels successifs réutilisent sans cesse les mêmes adresses, le sommet de la pile est presque toujours déjà dans le cache L1. C'est une autre raison de sa rapidité.
+
+Par convention sur les architectures courantes, la pile croît vers les adresses **décroissantes** : empiler un cadre fait donc *diminuer* le pointeur de pile.
+
+Enfin, la règle de la taille connue d'avance a une exception notable en C : les [_Variable-length Arrays_](https://en.wikipedia.org/wiki/Variable-length_array), qui permettent une allocation de taille dynamique sur la pile.
+
+{% endplus %}
+
+{% plus "Et dans un langage interprété comme Python ?" %}
+
+En Python, le programme qui s'exécute réellement sur la machine n'est pas celui que l'on écrit : c'est l'interpréteur, qui lit ce code et l'exécute au fur et à mesure. La pile de la machine est donc celle de l'interpréteur, qui simule ensuite sa propre pile pour exécuter notre code.
+
+Les variables déclarées dans le code, elles, ne sont que des références pointant vers des objets alloués sur le tas. C'est le sens de la formule « en Python, tout est un objet ».
+
+{% endplus %}
 
 # Le tas
+
+Le **tas** est une ressource globale, partagée par tout le processus. Demander de la mémoire, c'est appeler un allocateur, c'est-à-dire du vrai code : il doit trouver un bloc libre de taille suffisante, mettre à jour ses structures internes, éventuellement demander de la mémoire au système d'exploitation. La libération est explicite, l'ordre est arbitraire, et rien ne garantit que deux allocations consécutives soient voisines en mémoire.
+
+On peut voir le tas comme une bibliothèque : on a beaucoup plus de place, mais il faut parfois demander au bibliothécaire une étagère libre et suffisamment grande pour y stocker ses livres. Il se peut qu'on range une partie de ses livres dans une étagère, puis une autre partie dans une autre : le tas n'est pas une unique zone contiguë en mémoire. Il se peut enfin que le bibliothécaire n'ait plus aucune étagère libre : c'est rare sur les ordinateurs modernes, mais courant sur de petits systèmes embarqués.
+
+Voici un petit tableau récapitulatif des différences entre pile et tas :
+
+<table>
+  <thead>
+    <tr><th></th><th>Pile</th><th>Tas</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Coût d'une allocation</td><td>une instruction</td><td>appel de fonction, chemin variable</td></tr>
+    <tr><td>Libération</td><td>automatique, gratuite</td><td>explicite, à la charge du programme</td></tr>
+    <tr><td>Durée de vie</td><td>liée à la portée</td><td>arbitraire</td></tr>
+    <tr><td>Localité</td><td>excellente, cache chaud</td><td>dépend de l'historique des allocations</td></tr>
+    <tr><td>Taille disponible</td><td>limitée (souvent 1 à 8 Mo)</td><td>presque illimitée pour notre usage (limitée par la RAM)</td></tr>
+    <tr><td>Concurrence</td><td>une pile par thread</td><td>structure partagée entre threads</td></tr>
+  </tbody>
+</table>
+
+La dernière ligne est celle que l'on oublie le plus souvent, et c'est justement celle qui fait le plus mal dans un programme multithreadé.
+
+{% plus "D'où vient réellement la mémoire du tas : <code>brk</code> et <code>mmap</code>" %}
+
+Contrairement à une croyance répandue, l'allocateur ne se situe **pas** au niveau du système d'exploitation : c'est une bibliothèque embarquée dans le programme, qui gère sa mémoire dans l'espace utilisateur. Il ne sollicite le noyau que lorsqu'il a besoin de plus d'espace.
+
+Le tas n'est donc pas une réserve que le programme posséderait dès son lancement : il la demande au système d'exploitation, au fur et à mesure, par l'un de deux mécanismes.
+
+Le premier est historique. Le noyau maintient pour chaque processus une frontière, le *program break*, qui marque la fin de la zone de données. L'appel système [`brk`](https://man7.org/linux/man-pages/man2/brk.2.html) déplace cette frontière et agrandit d'autant la zone utilisable. C'est le tas du [premier schéma](#carte-memoire) de cet article, celui qui « croît vers les adresses hautes ».
+
+Le second est celui qui domine aujourd'hui. Avec [`mmap`](https://man7.org/linux/man-pages/man2/mmap.2.html), le programme ne repousse plus une frontière : il demande au noyau une **zone entièrement nouvelle**, que celui-ci place où il veut dans l'espace d'adressage. La glibc bascule automatiquement sur ce mécanisme au-delà d'un certain seuil, 128 Ko par défaut.
+
+> C'est la vraie raison pour laquelle le tas n'est pas une zone contiguë. L'image d'une région unique qui grandit vers le haut ne vaut que pour les petites allocations ; les grosses vivent dans des zones séparées, disséminées dans l'espace d'adressage.
+
+Cette distinction a une conséquence visible. Un bloc obtenu par `mmap` est rendu au système lors de sa libération, et la mémoire du processus diminue réellement. Un bloc issu du tas historique, lui, reste presque toujours acquis au processus : l'allocateur le récupère dans ses listes internes pour le réutiliser, mais ne redescend pratiquement jamais le *program break*. C'est pourquoi la consommation mémoire affichée par le système ne baisse pas nécessairement après avoir libéré beaucoup d'objets.
+
+{% endplus %}
+
+{% plus "Ce qui se passe quand la place vient à manquer" %}
+
+Contrairement à ce que laisse penser [ce premier schéma](#carte-memoire), la pile et le tas ne se percutent jamais. Quand la place manque, c'est le noyau qui refuse d'étendre la zone : `brk` ou `mmap` échoue, l'allocateur (embarqué dans notre programme) renvoie un pointeur nul, et `new` lève une exception [`std::bad_alloc`](https://en.cppreference.com/w/cpp/memory/new/bad_alloc). Trois situations bien distinctes se cachent derrière cet échec.
+
+**L'espace d'adressage est plein.** Hors de portée sur une machine 64 bits, c'était en revanche une limite réelle en 32 bits : l'espace total y est de 4 Gio, dont le noyau se réserve une part, si bien qu'il ne restait que 2 à 3 Gio au processus, quelle que soit la RAM installée.
+
+**La mémoire physique est épuisée.** Sous Linux, ce cas ne produit généralement pas d'échec d'allocation, à cause du **surengagement** : le noyau accorde la mémoire demandée sans vérifier qu'il pourra la fournir, en pariant que le programme n'utilisera pas tout. Le manque ne se révèle donc qu'au premier accès réel aux pages, et il ne se manifeste plus par une erreur que l'on pourrait traiter, mais par l'OOM killer, qui choisit un processus et le tue, parfois un autre que le coupable.
 
 <figure class="side">
 <svg viewBox="0 0 384 380" width="100%" style="max-width:384px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fragmentation du tas : trois blocs libres mais non contigus, une demande de trois blocs echoue">
@@ -194,57 +252,15 @@ C'est pour ces deux raisons, et pour elles seules, que l'autre zone existe.
 <figcaption>Les libérations laissent des trous : la place totale suffit, mais aucun bloc contigu n'est assez grand.</figcaption>
 </figure>
 
-Le **tas** est une ressource globale, partagée par tout le processus. Demander de la mémoire, c'est appeler un allocateur, c'est-à-dire du vrai code : il doit trouver un bloc libre de taille suffisante, mettre à jour ses structures internes, éventuellement demander de nouvelles pages au système d'exploitation. La libération est explicite, l'ordre est arbitraire, et rien ne garantit que deux allocations consécutives soient voisines en mémoire.
-
-On peut voir le tas comme une bibliothèque : on a beaucoup plus de place, mais il faut parfois demander à l'OS (le bibliothécaire) une étagère libre et suffisamment grande pour y stocker ses livres. Il se peut qu'on range une partie de ses livres dans une étagère, puis une autre partie dans une autre : le tas n'est pas une unique zone contiguë en mémoire. Il se peut aussi rarement que le bibliothécaire n'ait plus aucune étagère de libre. Cela est rare sur ordinateurs modernes possédant plusieurs gigaoctets de RAM, mais beaucoup plus courant sur de petits systèmes embarqués.
-
-<table>
-  <thead>
-    <tr><th></th><th>Pile</th><th>Tas</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>Coût d'une allocation</td><td>une instruction</td><td>appel de fonction, chemin variable</td></tr>
-    <tr><td>Libération</td><td>automatique, gratuite</td><td>explicite, à la charge du programme</td></tr>
-    <tr><td>Durée de vie</td><td>liée à la portée</td><td>arbitraire</td></tr>
-    <tr><td>Localité</td><td>excellente, cache chaud</td><td>dépend de l'historique des allocations</td></tr>
-    <tr><td>Taille disponible</td><td>limitée (souvent 1 à 8 Mo)</td><td>presque illimitée pour notre usage (limitée par la RAM)</td></tr>
-    <tr><td>Concurrence</td><td>une pile par thread</td><td>structure partagée entre threads</td></tr>
-  </tbody>
-</table>
-
-La dernière ligne est celle que l'on oublie le plus souvent, et c'est justement celle qui fait le plus mal dans un programme multithreadé.
-
-{% plus "D'où vient réellement la mémoire du tas : <code>brk</code> et <code>mmap</code>" %}
-
-Le tas n'est pas une réserve que le programme posséderait dès son lancement : il la demande au système d'exploitation, au fur et à mesure, par l'un de deux mécanismes.
-
-Le premier est historique. Le noyau maintient pour chaque processus une frontière, le *program break*, qui marque la fin de la zone de données. L'appel système [`brk`](https://man7.org/linux/man-pages/man2/brk.2.html) déplace cette frontière et agrandit d'autant la zone utilisable. C'est le tas du [premier schéma](#carte-memoire) de cet article, celui qui « croît vers les adresses hautes ».
-
-Le second est celui qui domine aujourd'hui. Avec [`mmap`](https://man7.org/linux/man-pages/man2/mmap.2.html), le programme ne repousse plus une frontière : il demande au noyau une **zone entièrement nouvelle**, que celui-ci place où il veut dans l'espace d'adressage. La glibc bascule automatiquement sur ce mécanisme au-delà d'un certain seuil, 128 Ko par défaut, et c'est ainsi que sont servies toutes les grosses allocations, à commencer par la [table de transposition](/posts/3-table-de-transposition/) d'un moteur d'échecs.
-
-> C'est la vraie raison pour laquelle le tas n'est pas une zone contiguë. L'image d'une région unique qui grandit vers le haut ne vaut que pour les petites allocations ; les grosses vivent dans des zones séparées, disséminées dans l'espace d'adressage.
-
-Cette distinction a une conséquence visible. Un bloc obtenu par `mmap` est rendu au système lors de sa libération, et la mémoire du processus diminue réellement. Un bloc issu du tas historique, lui, reste presque toujours acquis au processus : l'allocateur le récupère dans ses listes internes pour le réutiliser, mais ne redescend pratiquement jamais le *program break*. C'est pourquoi la consommation mémoire affichée par le système ne baisse pas nécessairement après avoir libéré beaucoup d'objets.
-
-{% endplus %}
-
-{% plus "Ce qui se passe quand la place vient à manquer" %}
-
-Contrairement à ce que laisse penser [ce premier schéma](#carte-memoire), la pile et le tas ne se percutent jamais. Quand la place manque, c'est le noyau qui refuse d'étendre la zone : `brk` ou `mmap` échoue, l'allocateur renvoie un pointeur nul, et `new` lève une exception [`std::bad_alloc`](https://en.cppreference.com/w/cpp/memory/new/bad_alloc). Trois situations bien distinctes se cachent derrière cet échec.
-
-**L'espace d'adressage est plein.** Hors de portée sur une machine 64 bits, où l'espace utilisateur atteint 128 Tio. C'était en revanche une limite réelle en 32 bits : l'espace total y est de 4 Gio, dont le noyau se réserve une part, si bien qu'il ne restait que 2 à 3 Gio au processus, quelle que soit la RAM installée.
-
-**La mémoire physique est épuisée.** Sous Linux, ce cas ne produit généralement pas d'échec d'allocation, à cause du **surengagement** : le noyau accorde la mémoire demandée sans vérifier qu'il pourra la fournir, en pariant que le programme n'utilisera pas tout. Le manque ne se révèle donc qu'au premier accès réel aux pages, et il ne se manifeste plus par une erreur que l'on pourrait traiter, mais par l'OOM killer, qui choisit un processus et le tue, parfois un autre que le coupable.
-
 **La mémoire est fragmentée.** C'est le cas le plus insidieux, et c'est celui qui compte réellement en embarqué : la mémoire libre totale est largement suffisante, mais elle est découpée en morceaux dont aucun n'est assez grand. L'allocation échoue alors sans que rien n'ait changé dans le programme, simplement parce qu'il tourne depuis longtemps.
 
 {% endplus %}
 
-# Ce qu'est réellement un std::vector
+# Un cas pratique : le std::vector en C++
 
 Un [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) est le tableau de taille dynamique de la bibliothèque standard : contrairement à un tableau C ou à un [`std::array`](https://en.cppreference.com/w/cpp/container/array), dont le nombre d'éléments est fixé à la compilation (donc qui vit sur la pile), un vecteur peut grandir et rétrécir pendant l'exécution, au fur et à mesure des [`push_back`](https://en.cppreference.com/w/cpp/container/vector/push_back). C'est ce qui en fait le conteneur par défaut en C++ : un simple tableau dont on n'a pas à connaître à l'avance le nombre d'éléments.
 
-Cette souplesse n'est pas gratuite, et il vaut la peine de regarder ce qu'elle implique. Le vecteur est en réalité découpé entre les deux mémoires (la pile et le tas). L'objet lui-même ne contient que trois pointeurs (début des données, fin des données, fin de la capacité), soit 24 octets sur une machine 64 bits, et il vit là où on l'a déclaré, typiquement sur la pile. Les éléments, eux, sont toujours sur le tas.
+Cette souplesse n'est pas gratuite. Le vecteur est en réalité découpé entre la pile et le tas. L'objet lui-même ne contient que trois pointeurs (début des données, fin des données, fin de la capacité), soit 24 octets sur une machine 64 bits, et il vit sur la pile. Les éléments, eux, sont toujours sur le tas.
 
 <figure>
 <svg viewBox="0 0 820 300" width="100%" style="max-width:820px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Un std::vector : trois pointeurs sur la pile designant le debut, la fin des elements et la fin du buffer alloue sur le tas">
@@ -308,54 +324,45 @@ Cette souplesse n'est pas gratuite, et il vaut la peine de regarder ce qu'elle i
 <figcaption>Les trois pointeurs du vecteur tiennent sur la pile ; les éléments vivent dans un buffer sur le tas. C'est la marge entre <code>end</code> et <code>capacity</code> qui évite une réallocation à chaque ajout.</figcaption>
 </figure>
 
-Deux conséquences en découlent. La première est une **indirection** : lire `v[i]` demande de charger un pointeur, puis de suivre ce pointeur vers une zone du tas qui n'a aucune raison d'être dans le cache. La seconde est que toute modification de la taille peut déclencher une **réallocation** : quand `push_back` dépasse la capacité, le vecteur alloue un nouveau buffer (généralement deux fois plus grand), y déplace les éléments existants, détruit les anciens, puis libère l'ancien buffer.
+Deux conséquences en découlent. La première est une **indirection** : lire `v[i]` demande de suivre un pointeur vers le tas, dans une zone qui n'a aucune raison d'être dans le cache. La seconde est la **réallocation** : quand `push_back` dépasse la capacité, le vecteur alloue un buffer plus grand (généralement deux fois), y déplace les éléments, puis libère l'ancien.
 
-Un `std::vector<int> v; for (...) v.push_back(x);` sur 1000 éléments ne fait donc pas une allocation, mais potentiellement des dizaines, avec les copies correspondantes. Le coût est amorti en $O(1)$ par élément, ce qui est une excellente propriété en moyenne, et une propriété inutilisable quand ce qui compte est le pire cas.
+Remplir ainsi un vecteur de 1000 éléments déclenche donc une dizaine d'allocations, avec les copies correspondantes. Le coût est amorti en $O(1)$ par élément : excellent en moyenne, inutilisable quand ce qui compte est le pire cas. [`reserve`](https://en.cppreference.com/w/cpp/container/vector/reserve) résout ce point en allouant la capacité voulue d'un coup, mais ne supprime ni l'allocation elle-même, ni l'indirection.
 
-[`reserve`](https://en.cppreference.com/w/cpp/container/vector/reserve) résout ce point précis en allouant la capacité voulue d'un coup, mais ne supprime pas l'allocation elle-même, ni l'indirection.
+{% plus "Un découpage presque universel : le cas de Java" %}
 
-> **Un concept presque universel :** Cette séparation entre une enveloppe sur la pile et un contenu sur le tas n'a rien de propre au C++, et elle est même la règle dans certains langages. En Java, hors types primitifs, toute donnée vit sur le tas : une variable d'objet ne contient qu'une référence vers l'objet.
->
-> C'est ce qui explique que la `NullPointerException` y soit l'erreur la plus courante. La référence peut ne désigner aucun objet, et l'on ne s'en aperçoit qu'en tentant de l'utiliser à l'exécution. La différence avec le C++ est que là où ce découpage est imposé et invisible en Java, il reste un choix explicite en C++ : un objet C++ peut vivre entièrement sur la pile.
+Cette séparation entre une enveloppe sur la pile et un contenu sur le tas n'a rien de propre au C++, et elle est même la règle dans certains langages. En Java, hors types primitifs, toute donnée vit sur le tas : une variable d'objet ne contient qu'une référence vers l'objet.
+
+C'est ce qui explique que la `NullPointerException` y soit l'erreur la plus courante. La référence peut ne désigner aucun objet, et l'on ne s'en aperçoit qu'en tentant de l'utiliser à l'exécution. La différence avec le C++ est que là où ce découpage est imposé et invisible en Java, il reste un choix explicite en C++ : un objet C++ peut vivre entièrement sur la pile.
+
+{% endplus %}
 
 # Le coût réel d'une allocation dynamique
 
-Une allocation n'a pas un coût, elle a une **distribution** de coûts.
-
-Dans le cas favorable, l'allocateur trouve un bloc de la bonne taille dans un cache par thread et rend la main en quelques dizaines de nanosecondes. Dans le cas défavorable, il doit fusionner des blocs libres, prendre un verrou partagé, ou demander de nouvelles pages au noyau via `mmap`. Ces pages arrivent alors non mappées : le premier accès déclenche un défaut de page, donc une entrée dans le noyau, à quelques microsecondes. Le rapport entre le meilleur et le pire cas dépasse facilement un facteur cent.
+Dans le cas favorable, l'allocateur trouve un bloc libre dans un cache propre au thread et rend la main en quelques dizaines de nanosecondes. Dans le cas défavorable, il doit réorganiser ses blocs libres, attendre les autres threads ou demander de la mémoire au noyau : on passe alors à plusieurs microsecondes, soit un facteur cent.
 
 > Le problème d'une allocation dynamique n'est pas sa moyenne, c'est sa variance. Un coût moyen faible mais imprévisible est bien plus difficile à absorber qu'un coût élevé mais constant.
-
-À cela s'ajoute la contention. Les allocateurs modernes maintiennent des caches par thread, mais ces caches se remplissent et se vident depuis des structures communes. Sur un moteur d'échecs en Lazy SMP, où tous les threads exécutent la même boucle de recherche, une allocation dans cette boucle signifie que tous les threads frappent l'allocateur en même temps, sur le même point de synchronisation.
 
 {% partie "Seconde partie", "Ce que cela change pour Chess26" %}
 
 # La règle : zéro allocation sur le chemin critique
 
-La fonction de recherche d'un moteur d'échecs est appelée plusieurs millions de fois par seconde. À ce rythme, une seule allocation par nœud suffit à faire de l'allocateur le composant le plus sollicité du programme, devant l'évaluation et la génération de coups.
+La fonction de recherche d'un moteur d'échecs est appelée plusieurs millions de fois par seconde. À ce rythme, une seule allocation par nœud suffit à faire de l'allocateur le composant le plus sollicité du programme, devant l'évaluation et la génération de coups. Le problème est encore aggravé par le [Lazy SMP](/posts/6-lazy-smp/) : tous les threads exécutent la même boucle de recherche, donc une allocation dans cette boucle signifie que tous frappent l'allocateur en même temps.
 
 La règle est donc absolue : **aucune allocation dynamique sur le chemin critique**. En pratique, cela veut dire :
 
 - les listes de coups sont des tableaux de taille fixe sur la pile, dimensionnés au pire cas : le maximum théorique est de 218 coups légaux dans une position. Chess26 réserve [256 entrées](https://github.com/EmericBraud/chess26/blob/main/src/common/constants.hpp#L7), que la [`MoveList`](https://github.com/EmericBraud/chess26/blob/main/src/core/move/move_list.hpp#L7-L11) déclare en tableaux bruts ;
-- les structures indexées par profondeur, comme les killer moves ou l'historique de la partie, sont des tableaux préalloués une fois pour toutes ;
-- les objets par thread sont alloués à la création du thread, jamais pendant la recherche.
+- les structures indexées par profondeur, comme les [killer moves](/posts/5-move-ordering/) ou l'historique de la partie, sont des tableaux préalloués une fois pour toutes ;
+- les objets par thread sont alloués à la création du thread, jamais pendant la recherche ;
+- les gros objets (table de transposition, poids du réseau de neurones, tables précalculées de génération de coups) sont alloués une seule fois, au démarrage. Entre deux recherches, la table n'est même pas vidée : un compteur d'âge suffit à reconnaître les entrées obsolètes.
 
-> Le point délicat est que beaucoup d'allocations sont **invisibles** dans le code. Un `std::string` construit pour un message de log, un `std::function` qui capture plus que ne le permet son stockage interne, un `std::map` qui alloue un nœud par insertion, un `std::vector` local dans une fonction utilitaire : rien de tout cela ne s'annonce comme une allocation, et tout cela en fait une. Le seul moyen fiable de s'en assurer est de mesurer, en instrumentant `operator new` pour compter les appels pendant une recherche : le nombre attendu est zéro.
+{% plus "Le piège des allocations invisibles" %}
 
-# Les gros objets : alloués une fois, au démarrage
+Le point délicat est que beaucoup d'allocations sont **invisibles** dans le code. Un `std::string` construit pour un message de log, un `std::function` qui capture plus que ne le permet son stockage interne, un `std::map` qui alloue un nœud par insertion, un `std::vector` local dans une fonction utilitaire : rien de tout cela ne s'annonce comme une allocation, et tout cela en fait une. Le seul moyen fiable de s'en assurer est de mesurer, en instrumentant `operator new` pour compter les appels pendant une recherche : le nombre attendu est zéro.
 
-L'autre versant de la règle concerne les structures volumineuses, au premier rang desquelles la **table de transposition**. Elle occupe couramment plusieurs centaines de mégaoctets, et elle est allouée exactement une fois, au démarrage du moteur, ou lors d'un changement explicite de taille demandé par l'interface UCI.
-
-Elle est allouée en un seul bloc contigu, dimensionné à une puissance de deux pour que l'indexation se fasse par masque binaire plutôt que par modulo. Rien n'est alloué ensuite : entre deux recherches, la table n'est ni libérée ni vidée, on se contente d'incrémenter un compteur d'âge qui permet de reconnaître les entrées devenues obsolètes. Le coût de cette mémoire est ainsi payé une seule fois, hors du temps de jeu, là où quelques centaines de millisecondes n'ont aucune importance.
-
-Le même raisonnement s'applique aux poids du réseau de neurones, chargés au démarrage, et aux tables précalculées de la génération de coups.
+{% endplus %}
 
 # Le principe général
 
-Rien de tout cela ne condamne l'allocation dynamique : sans elle, impossible d'écrire un programme dont les besoins ne sont connus qu'à l'exécution. Mais allouer, c'est faire appel à un **service partagé** dont on ne maîtrise ni le temps de réponse, ni la disponibilité. La bonne réaction n'est donc pas d'allouer moins, mais d'allouer **ailleurs** : à un moment que l'on choisit, plutôt qu'au milieu de la boucle la plus chaude du programme.
+Rien de tout cela ne condamne l'allocation dynamique : sans elle, impossible d'écrire un programme dont les besoins ne sont connus qu'à l'exécution. Mais allouer, c'est faire appel à un **service partagé** dont on ne maîtrise ni le temps de réponse, ni la disponibilité. La bonne réaction n'est donc pas d'allouer moins, mais d'allouer **au bon moment** : un moment que l'on choisit, plutôt qu'au milieu de la boucle la plus chaude du programme.
 
-Le motif qui en découle se retrouve dans tous les domaines où la latence compte plus que la commodité, du traitement audio temps réel à la finance à haute fréquence : on alloue aux frontières du programme, à l'initialisation ou lors d'événements rares, et on garde le chemin chaud entièrement libre d'allocations, sur des tampons dont on possède déjà la mémoire.
-
-L'embarqué et les systèmes critiques appliquent la même règle, mais pour une raison encore plus forte : une allocation dynamique peut **échouer**. Sur un moteur d'échecs, une allocation lente coûte de la profondeur de recherche ; sur un calculateur de vol ou un dispositif médical, une allocation qui échoue au mauvais moment est une panne. À cela s'ajoute la fragmentation : après des heures de fonctionnement, un tas peut disposer de la mémoire totale demandée sans plus contenir un seul bloc contigu assez grand, et l'échec survient alors sans que rien n'ait changé dans le programme.
-
-Ainsi, sur des systèmes critiques, toute la mémoire est réservée au démarrage, dans des tampons de taille fixe dimensionnés au pire cas, et le programme n'appelle plus jamais l'allocateur ensuite. Un système qui a démarré a donc, par construction, déjà toute la mémoire dont il aura besoin, et la question « que faire si l'allocation échoue » disparaît au lieu d'être traitée. C'est par exemple le cas des normes dans la NASA ou le MISRA C dans l'automobile.
+Ainsi, sur des systèmes critiques ou visant la performance absolue, toute la mémoire est réservée au démarrage, dans des tampons de taille fixe dimensionnés au pire cas, et le programme n'appelle plus jamais l'allocateur ensuite. Un système qui a démarré a donc, par construction, déjà toute la mémoire dont il aura besoin, et la question « que faire si l'allocation échoue » disparaît au lieu d'être traitée. C'est ce qu'imposent par exemple les règles de codage de la NASA ou la norme MISRA C dans l'automobile.
