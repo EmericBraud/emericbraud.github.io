@@ -60,7 +60,7 @@ A program has two main areas for storing the data it creates at runtime: the **s
 <figcaption>The two areas face each other and grow toward one another, sharing the same free space.</figcaption>
 </figure>
 
-This is the classic diagram every developer studies at least once. It shows how these two areas are separated in memory, but it doesn't necessarily tell you what that separation implies or how it actually plays out.
+It is the diagram every developer has seen at least once, often without knowing what it actually implies.
 
 {% partie "Part one", "How memory works" %}
 
@@ -131,7 +131,7 @@ The stack is the memory area a program uses **by default**: every local variable
 
 It is a contiguous region of memory _(a single block)_, private to each thread, managed by a simple pointer. Entering a function reserves room for its local variables by moving that pointer, and leaving it puts the pointer back where it was. A stack allocation therefore costs one arithmetic instruction, and freeing it costs literally nothing.
 
-You can think of the stack as a book where you track the current page with a bookmark: on each new function call, you move the bookmark forward by as many pages as that function's local variables weigh, and once you leave the function, you move it back by the same number of pages to land exactly where you were.
+You can think of the stack as a bookmark in a book: each function call moves it forward by as many pages as its local variables take up, and returning moves it back exactly where it was.
 
 That simplicity is exactly what makes it fast, and it is also what imposes two limits you cannot get around.
 
@@ -163,9 +163,9 @@ The variables you declare in your code are only references pointing to objects a
 
 # The heap
 
-The **heap** is a global resource, shared by the whole process. Asking for memory means calling an allocator, which is real code: it has to find a free block that is large enough, update its internal structures, and possibly request memory from the operating system. Freeing is explicit, the order is arbitrary, and nothing guarantees that two consecutive allocations will be neighbors in memory.
+The **heap** is a global resource, shared by the whole process. Asking for memory means calling an allocator, which is real code: it has to find a free block that is large enough, update its internal structures, and possibly request memory from the operating system. Freeing is explicit and can happen in any order, unlike the stack, where the last block reserved is always the first one released. Nothing guarantees either that two consecutive allocations will be adjacent in memory.
 
-You can think of the heap as a library: there is much more room, but sometimes you have to ask the librarian for a free shelf big enough to hold your books. You may end up storing some of your books on one shelf and the rest on another: the heap is not a single contiguous region of memory. And the librarian may simply have no free shelf left: rare on modern computers, but common on small embedded systems.
+You can think of the heap as a library: there is much more room, but you have to ask the librarian for a free shelf big enough. Your books often end up spread across shelves far apart from each other, and sometimes, especially on small embedded systems, there is no shelf left at all.
 
 Here is a quick summary of the differences between the stack and the heap:
 
@@ -207,7 +207,7 @@ Contrary to what [that first diagram](#carte-memoire) suggests, the stack and th
 
 **The address space is full.** Out of reach on a 64-bit machine, this was a real limit on 32-bit systems: the total space there is 4 GiB, part of which the kernel reserves for itself, leaving the process only 2 to 3 GiB regardless of how much RAM was installed.
 
-**Physical memory is exhausted.** On Linux, this usually doesn't cause an allocation failure, because of **overcommit**: the kernel grants the requested memory without checking that it can actually provide it, betting that the program won't use all of it. The shortage only shows up on the first real access to the pages, and it no longer appears as an error you could handle, but as the OOM killer, which picks a process and kills it, sometimes not the one at fault.
+**Physical memory is exhausted.** On Linux, this usually doesn't make the allocation fail, because of **overcommit**. When a program asks for memory, the kernel only reserves addresses for it, and only supplies actual RAM when the program writes to it. Since programs rarely use everything they ask for, the kernel promises more memory than it has, the way an airline sells more seats than the plane holds. If the bet is lost, it is too late to make the allocation fail, since it succeeded long ago: the kernel then frees memory by force with the OOM killer, which picks a process and kills it, sometimes not the culprit.
 
 <figure class="side">
 <svg viewBox="0 0 384 380" width="100%" style="max-width:384px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Heap fragmentation: three free but non-contiguous blocks, a request for three blocks fails">
@@ -259,7 +259,7 @@ Contrary to what [that first diagram](#carte-memoire) suggests, the stack and th
 
 # A practical case: std::vector in C++
 
-A [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) is the standard library's dynamically sized array: unlike a C array or a [`std::array`](https://en.cppreference.com/w/cpp/container/array), whose number of elements is fixed at compile time (and which therefore lives on the stack), a vector can grow and shrink at runtime, one [`push_back`](https://en.cppreference.com/w/cpp/container/vector/push_back) after another. That is what makes it the default container in C++: a plain array whose number of elements you don't need to know in advance.
+A [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) is the standard library's dynamically sized array: unlike a C array or a [`std::array`](https://en.cppreference.com/w/cpp/container/array), whose number of elements is fixed at compile time (and which therefore lives on the stack), a vector can grow and shrink at runtime, one [`push_back`](https://en.cppreference.com/w/cpp/container/vector/push_back) after another. It is the default container in C++.
 
 That flexibility isn't free. A vector is actually split between the stack and the heap. The object itself only holds three pointers (start of the data, end of the data, end of the capacity), which is 24 bytes on a 64-bit machine, and it lives on the stack. The elements, however, are always on the heap.
 
@@ -364,6 +364,4 @@ The tricky part is that many allocations are **invisible** in the code. A `std::
 
 # The general principle
 
-None of this condemns dynamic allocation: without it, you couldn't write a program whose needs are only known at runtime. But allocating means calling on a **shared service** whose response time and availability are out of your control. The right reaction, then, is not to allocate less, but to allocate **at the right time**: a moment you choose, rather than in the middle of the program's hottest loop.
-
-That is why, in safety-critical systems or those chasing absolute performance, all memory is reserved at startup, in fixed-size buffers sized for the worst case, and the program never calls the allocator again afterward. A system that has started therefore already has, by construction, all the memory it will ever need, and the question "what do we do if the allocation fails?" disappears instead of having to be handled. This is what NASA's coding rules or the MISRA C standard in the automotive industry require, for example.
+None of this condemns dynamic allocation: without it, you couldn't write a program whose needs are only known at runtime. But allocating means calling on a **shared service** whose response time and availability are out of your control. The right reaction, then, is not to allocate less, but to allocate **at the right time**: a moment you choose, rather than in the middle of the program's hottest loop. In safety-critical systems or those chasing absolute performance, all memory is therefore reserved at startup, in fixed-size buffers sized for the worst case, and the program never calls the allocator again afterward: the question "what do we do if the allocation fails?" disappears instead of having to be handled. This is what NASA's coding rules or the MISRA C standard in the automotive industry require, for example.

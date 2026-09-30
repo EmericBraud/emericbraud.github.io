@@ -59,7 +59,7 @@ Un programme dispose de deux zones principales pour stocker les données créée
 <figcaption>Les deux zones se font face et grandissent l'une vers l'autre, en se partageant le même espace libre.</figcaption>
 </figure>
 
-C'est le schéma classique que chaque développeur étudie au moins une fois. On voit la séparation en mémoire entre ces deux zones, mais l'on ne comprend pas nécessairement ce qu'elle implique ni comment elle se matérialise.
+C'est le schéma que tout développeur a vu au moins une fois, sans forcément savoir ce qu'il implique concrètement.
 
 {% partie "Première partie", "Comment la mémoire fonctionne" %}
 
@@ -130,7 +130,7 @@ La pile est la zone mémoire que le programme utilise **par défaut** : toute va
 
 C'est une zone contiguë de mémoire _(un seul bloc)_, propre à chaque thread, gérée par un simple pointeur. Entrer dans une fonction réserve la place des variables locales en déplaçant ce pointeur, en sortir le remet où il était. Une allocation sur la pile coûte donc une instruction arithmétique, et sa libération n'a littéralement aucun coût.
 
-On peut voir la pile comme un livre dans lequel on suivrait la page actuelle via un marque-page : à chaque nouvel appel de fonction, on avance le marque-page proportionnellement au poids des variables locales à cette fonction, et une fois qu'on quitte la fonction, on recule le marque-page du même nombre de pages pour revenir précisément où on en était.
+On peut voir la pile comme un marque-page dans un livre : chaque appel de fonction l'avance d'autant de pages que ses variables locales en occupent, et le retour le ramène exactement où il était.
 
 Cette simplicité est précisément ce qui la rend rapide, et c'est aussi ce qui lui impose deux limites dont on ne peut s'affranchir.
 
@@ -140,7 +140,7 @@ Cette simplicité est précisément ce qui la rend rapide, et c'est aussi ce qui
 
 Le dépassement de cette limite, le fameux *stack overflow*, ne se signale pas par un code d'erreur que l'on pourrait traiter : le programme s'arrête net. Les deux causes habituelles sont une récursion trop profonde et un gros tableau déclaré en variable locale.
 
-C'est pour ces deux raisons, que l'autre zone existe.
+C'est pour ces deux raisons que l'autre zone existe.
 
 {% plus "Quelques précisions sur la pile" %}
 
@@ -162,9 +162,9 @@ Les variables déclarées dans le code, elles, ne sont que des références poin
 
 # Le tas
 
-Le **tas** est une ressource globale, partagée par tout le processus. Demander de la mémoire, c'est appeler un allocateur, c'est-à-dire du vrai code : il doit trouver un bloc libre de taille suffisante, mettre à jour ses structures internes, éventuellement demander de la mémoire au système d'exploitation. La libération est explicite, l'ordre est arbitraire, et rien ne garantit que deux allocations consécutives soient voisines en mémoire.
+Le **tas** est une ressource globale, partagée par tout le processus. Demander de la mémoire, c'est appeler un allocateur, c'est-à-dire du vrai code : il doit trouver un bloc libre de taille suffisante, mettre à jour ses structures internes, éventuellement demander de la mémoire au système d'exploitation. La libération est explicite et peut se faire dans n'importe quel ordre, contrairement à la pile où le dernier bloc réservé est toujours le premier rendu. Rien ne garantit non plus que deux allocations consécutives soient voisines en mémoire.
 
-On peut voir le tas comme une bibliothèque : on a beaucoup plus de place, mais il faut parfois demander au bibliothécaire une étagère libre et suffisamment grande pour y stocker ses livres. Il se peut qu'on range une partie de ses livres dans une étagère, puis une autre partie dans une autre : le tas n'est pas une unique zone contiguë en mémoire. Il se peut enfin que le bibliothécaire n'ait plus aucune étagère libre : c'est rare sur les ordinateurs modernes, mais courant sur de petits systèmes embarqués.
+On peut voir le tas comme une bibliothèque : il y a beaucoup plus de place, mais il faut demander au bibliothécaire une étagère libre assez grande. On finit souvent avec ses livres répartis sur des étagères éloignées les unes des autres, et il arrive, surtout sur de petits systèmes embarqués, qu'il n'en reste plus aucune de libre.
 
 Voici un petit tableau récapitulatif des différences entre pile et tas :
 
@@ -206,7 +206,7 @@ Contrairement à ce que laisse penser [ce premier schéma](#carte-memoire), la p
 
 **L'espace d'adressage est plein.** Hors de portée sur une machine 64 bits, c'était en revanche une limite réelle en 32 bits : l'espace total y est de 4 Gio, dont le noyau se réserve une part, si bien qu'il ne restait que 2 à 3 Gio au processus, quelle que soit la RAM installée.
 
-**La mémoire physique est épuisée.** Sous Linux, ce cas ne produit généralement pas d'échec d'allocation, à cause du **surengagement** : le noyau accorde la mémoire demandée sans vérifier qu'il pourra la fournir, en pariant que le programme n'utilisera pas tout. Le manque ne se révèle donc qu'au premier accès réel aux pages, et il ne se manifeste plus par une erreur que l'on pourrait traiter, mais par l'OOM killer, qui choisit un processus et le tue, parfois un autre que le coupable.
+**La mémoire physique est épuisée.** Sous Linux, ce cas ne fait généralement pas échouer l'allocation, à cause du **surengagement**. Quand un programme demande de la mémoire, le noyau ne lui réserve que des adresses, et ne fournit réellement la RAM qu'au moment où le programme écrit dedans. Comme les programmes utilisent rarement tout ce qu'ils demandent, le noyau promet plus de mémoire qu'il n'en possède, à la manière d'une compagnie aérienne qui vend plus de places qu'il n'y en a dans l'avion. Si le pari est perdu, il est trop tard pour faire échouer l'allocation, qui a réussi depuis longtemps : le noyau libère alors de la mémoire de force avec l'OOM killer, qui choisit un processus et le tue, parfois un autre que le coupable.
 
 <figure class="side">
 <svg viewBox="0 0 384 380" width="100%" style="max-width:384px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fragmentation du tas : trois blocs libres mais non contigus, une demande de trois blocs echoue">
@@ -258,7 +258,7 @@ Contrairement à ce que laisse penser [ce premier schéma](#carte-memoire), la p
 
 # Un cas pratique : le std::vector en C++
 
-Un [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) est le tableau de taille dynamique de la bibliothèque standard : contrairement à un tableau C ou à un [`std::array`](https://en.cppreference.com/w/cpp/container/array), dont le nombre d'éléments est fixé à la compilation (donc qui vit sur la pile), un vecteur peut grandir et rétrécir pendant l'exécution, au fur et à mesure des [`push_back`](https://en.cppreference.com/w/cpp/container/vector/push_back). C'est ce qui en fait le conteneur par défaut en C++ : un simple tableau dont on n'a pas à connaître à l'avance le nombre d'éléments.
+Un [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) est le tableau de taille dynamique de la bibliothèque standard : contrairement à un tableau C ou à un [`std::array`](https://en.cppreference.com/w/cpp/container/array), dont le nombre d'éléments est fixé à la compilation (donc qui vit sur la pile), un vecteur peut grandir et rétrécir pendant l'exécution, au fur et à mesure des [`push_back`](https://en.cppreference.com/w/cpp/container/vector/push_back). C'est le conteneur par défaut en C++.
 
 Cette souplesse n'est pas gratuite. Le vecteur est en réalité découpé entre la pile et le tas. L'objet lui-même ne contient que trois pointeurs (début des données, fin des données, fin de la capacité), soit 24 octets sur une machine 64 bits, et il vit sur la pile. Les éléments, eux, sont toujours sur le tas.
 
@@ -363,6 +363,4 @@ Le point délicat est que beaucoup d'allocations sont **invisibles** dans le cod
 
 # Le principe général
 
-Rien de tout cela ne condamne l'allocation dynamique : sans elle, impossible d'écrire un programme dont les besoins ne sont connus qu'à l'exécution. Mais allouer, c'est faire appel à un **service partagé** dont on ne maîtrise ni le temps de réponse, ni la disponibilité. La bonne réaction n'est donc pas d'allouer moins, mais d'allouer **au bon moment** : un moment que l'on choisit, plutôt qu'au milieu de la boucle la plus chaude du programme.
-
-Ainsi, sur des systèmes critiques ou visant la performance absolue, toute la mémoire est réservée au démarrage, dans des tampons de taille fixe dimensionnés au pire cas, et le programme n'appelle plus jamais l'allocateur ensuite. Un système qui a démarré a donc, par construction, déjà toute la mémoire dont il aura besoin, et la question « que faire si l'allocation échoue » disparaît au lieu d'être traitée. C'est ce qu'imposent par exemple les règles de codage de la NASA ou la norme MISRA C dans l'automobile.
+Rien de tout cela ne condamne l'allocation dynamique : sans elle, impossible d'écrire un programme dont les besoins ne sont connus qu'à l'exécution. Mais allouer, c'est faire appel à un **service partagé** dont on ne maîtrise ni le temps de réponse, ni la disponibilité. La bonne réaction n'est donc pas d'allouer moins, mais d'allouer **au bon moment** : un moment que l'on choisit, plutôt qu'au milieu de la boucle la plus chaude du programme. Sur des systèmes critiques ou visant la performance absolue, toute la mémoire est ainsi réservée au démarrage, dans des tampons de taille fixe dimensionnés au pire cas, et le programme n'appelle plus jamais l'allocateur ensuite : la question « que faire si l'allocation échoue » disparaît au lieu d'être traitée. C'est ce qu'imposent par exemple les règles de codage de la NASA ou la norme MISRA C dans l'automobile.
