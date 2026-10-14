@@ -42,7 +42,7 @@ So if the score $S$ is positive, White has the advantage. If $S$ is negative, Bl
 >
 > For years, programmers therefore came up with more and more sophisticated rules to evaluate a position as accurately as possible: bishop pair bonus, pawn structure, king safety... You can add as many rules as you like.
 >
-> Writing rules by hand to evaluate a position is called an **HCE** *(Hand Crafted Evaluation)*. More recent techniques use neural networks to refine the evaluation. But the idea is the same: design an `Eval(position)` function that takes a position and returns a score.
+> Writing rules by hand to evaluate a position is called an **HCE** *(Hand Crafted Evaluation)*. More recent techniques, such as [NNUE](/en/posts/8-nnue-and-machine-learning/), replace that evaluation with a neural network. But the idea is the same: design an `Eval(position)` function that takes a position and returns a score.
 
 # Finding the best move: the search tree
 

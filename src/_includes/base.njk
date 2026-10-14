@@ -267,6 +267,33 @@ figure chess-board {
   aspect-ratio: 1 / 1;
   overflow: hidden;
 }
+
+/* Rangee de plateaux : comparer une position avant et apres un coup */
+.boardrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+.boardcap {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin: 0.6rem 0 0;
+  text-align: center;
+}
+.boardarrow {
+  font-size: 1.05rem;
+  color: var(--faint);
+  margin: 0;
+  white-space: nowrap;
+}
+/* Le composant expose ses cases en parts : une case se surligne donc en CSS */
+chess-board.hl-e2::part(e2),
+chess-board.hl-e4::part(e4) {
+  background-color: #4a7f6b;
+  box-shadow: inset 0 0 0 2px #2f5c4b;
+}
 figcaption {
   font-size: 0.9rem;
   color: var(--muted);
