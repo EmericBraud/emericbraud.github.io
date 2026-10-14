@@ -62,12 +62,15 @@ def traiter(langue, src, racine, essai=False):
     texte = chemin.read_text(encoding='utf-8')
     svg_inline = construire((src / SVG[langue]).read_text(encoding="utf-8"))
 
+    # Idempotent : on remplace aussi bien l'ancien schema d'architecture
+    # (840 x 224) que celui qu'on a deja insere (2100 x 920).
     motif = re.compile(
-        r'<figure>\n<svg viewBox="0 0 840 224".*?</svg>\n<figcaption>.*?</figcaption>\n</figure>',
+        r'<figure>\n<svg viewBox="0 0 (?:840 224|2100 920)".*?</svg>\n'
+        r'<figcaption>.*?</figcaption>\n</figure>',
         re.S)
     trouve = motif.search(texte)
     if not trouve:
-        print(f"  [{langue}] ANCIEN SCHEMA INTROUVABLE — rien fait", file=sys.stderr)
+        print(f"  [{langue}] SCHEMA INTROUVABLE — rien fait", file=sys.stderr)
         return False
 
     nouveau = (f'<figure>\n{svg_inline}\n'
@@ -75,7 +78,7 @@ def traiter(langue, src, racine, essai=False):
     texte = texte[:trouve.start()] + nouveau + texte[trouve.end():]
     if not essai:
         chemin.write_text(texte, encoding='utf-8')
-    print(f"  [{langue}] {chemin} : ancien schema remplace "
+    print(f"  [{langue}] {chemin} : schema remplace "
           f"({len(trouve.group(0))} -> {len(nouveau)} caracteres)")
     return True
 
